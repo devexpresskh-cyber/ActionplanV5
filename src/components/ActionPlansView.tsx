@@ -30,7 +30,8 @@ import {
   Users as UsersIcon,
   MessageSquare,
   Network,
-  ListTree
+  ListTree,
+  Layers
 } from 'lucide-react';
 import { ActionPlan, Language, User, PriorityLevel, PlanStatus, Department, Objective } from '../types';
 import { translations } from '../services/i18n';
@@ -377,46 +378,46 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5 sm:space-y-3.5 max-w-7xl mx-auto">
       {/* Header and Controls */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
             {t.actionPlans}
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             {lang === 'km'
               ? 'គ្រប់គ្រងផែនការសកម្មភាពតាមនាយកដ្ឋាន ការសម្រេចតាមដំណាក់កាល និងលំហូរការងារអនុម័តពហុកម្រិត។'
               : 'Manage departmental action plans, milestone delivery, and multi-tier approval states.'}
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 self-start md:self-auto">
+        <div className="flex items-center space-x-1.5 self-start md:self-auto shrink-0">
           {onOpenVoiceAssistant && (
             <button
               onClick={onOpenVoiceAssistant}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold shadow-2xs transition"
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold shadow-2xs transition"
               title="Voice-Activated Plan Commands (Create, Update, Delete)"
             >
-              <Mic className="w-4 h-4 text-indigo-600 animate-pulse" />
-              <span>{lang === 'km' ? 'បញ្ជាដោយសំឡេង' : 'Voice Assistant'}</span>
+              <Mic className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+              <span>{lang === 'km' ? 'បញ្ជាសំឡេង' : 'Voice AI'}</span>
             </button>
           )}
 
           {db.canCreatePlan(currentUser) && (
             <button
               onClick={handleOpenCreate}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition"
             >
-              <Plus className="w-4 h-4" />
-              <span>{lang === 'km' ? 'បង្កើតផែនការសកម្មភាព' : 'Create Action Plan'}</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>{lang === 'km' ? 'បង្កើតផែនការថ្មី' : 'Create Plan'}</span>
             </button>
           )}
         </div>
       </div>
 
       {/* View Switcher: Cards vs WBS Plan & Task Treeview vs Hierarchy Treeview Plan */}
-      <div className="flex flex-wrap items-center justify-between bg-white p-2 rounded-xl border border-slate-200 shadow-xs gap-2">
+      <div className="flex flex-wrap items-center justify-between bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200 shadow-2xs gap-1.5">
         <div className="flex flex-wrap items-center space-x-1.5">
           <button
             onClick={() => setViewLayout('cards')}
@@ -517,26 +518,26 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[240px]">
+      {/* Filter and Search Bar - Compact */}
+      <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[220px]">
           <div className="relative w-full max-w-xs">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
             <input
               type="text"
               value={search}
               onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-              placeholder={lang === 'km' ? 'ស្វែងរកលេខកូដផែនការ, ចំណងជើង...' : 'Search plan number, title...'}
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              placeholder={lang === 'km' ? 'ស្វែងរកលេខកូដ, ចំណងជើង...' : 'Search plan number, title...'}
+              className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
             />
           </div>
 
           {/* Ownership Toggle (All vs My Owned) */}
           {currentUser.role === 'Employee' ? (
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold shadow-xs">
+            <div className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold shadow-2xs">
               <UserCheck className="w-3.5 h-3.5 text-cyan-600" />
-              <span>{lang === 'km' ? 'សិទ្ធិបុគ្គលិក៖ មើលបានតែផែនការផ្ទាល់ខ្លួន' : 'Employee Access: Owned Plans Only'}</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-cyan-200 text-cyan-900 text-[10px] font-bold">
+              <span>{lang === 'km' ? 'ផែនការផ្ទាល់ខ្លួន' : 'My Owned Plans Only'}</span>
+              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-cyan-200 text-cyan-900 text-[10px] font-bold">
                 {plans.length}
               </span>
             </div>
@@ -544,9 +545,9 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
             <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
               <button
                 onClick={() => { setFilterOwnership('all'); setCurrentPage(1); }}
-                className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                className={`px-2 py-0.5 rounded-md font-semibold transition ${
                   filterOwnership === 'all'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -554,15 +555,15 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
               </button>
               <button
                 onClick={() => { setFilterOwnership('my-owned'); setCurrentPage(1); }}
-                className={`px-2.5 py-1 rounded-md font-semibold transition flex items-center space-x-1 ${
+                className={`px-2 py-0.5 rounded-md font-semibold transition flex items-center space-x-1 ${
                   filterOwnership === 'my-owned'
-                    ? 'bg-emerald-600 text-white shadow-xs'
+                    ? 'bg-emerald-600 text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>{lang === 'km' ? 'ផែនការផ្ទាល់ខ្លួន' : 'My Owned'}</span>
-                <span className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] ${
+                <UserCheck className="w-3 h-3" />
+                <span>{lang === 'km' ? 'ផ្ទាល់ខ្លួន' : 'My Owned'}</span>
+                <span className={`ml-1 px-1 py-0.2 rounded-full text-[10px] ${
                   filterOwnership === 'my-owned' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'
                 }`}>
                   {myOwnedPlansCount}
@@ -572,14 +573,14 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {/* Department Filter */}
           <select
             value={filterDept}
             onChange={e => { setFilterDept(e.target.value); setCurrentPage(1); }}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden"
+            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden text-xs"
           >
-            <option value="all">{lang === 'km' ? 'គ្រប់នាយកដ្ឋានទាំងអស់' : 'All Departments'}</option>
+            <option value="all">{lang === 'km' ? 'គ្រប់នាយកដ្ឋាន' : 'All Departments'}</option>
             {departments.map(d => (
               <option key={d.id} value={d.id}>{d.name}</option>
             ))}
@@ -589,9 +590,9 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
           <select
             value={filterStatus}
             onChange={e => { setFilterStatus(e.target.value); setCurrentPage(1); }}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden"
+            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden text-xs"
           >
-            <option value="all">{lang === 'km' ? 'គ្រប់ស្ថានភាពទាំងអស់' : 'All Statuses'}</option>
+            <option value="all">{lang === 'km' ? 'គ្រប់ស្ថានភាព' : 'All Statuses'}</option>
             <option value="Draft">{t.draft}</option>
             <option value="Submitted">{t.submitted}</option>
             <option value="Approved">{t.approved}</option>
@@ -604,9 +605,9 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
           <select
             value={filterPriority}
             onChange={e => { setFilterPriority(e.target.value); setCurrentPage(1); }}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden"
+            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden text-xs"
           >
-            <option value="all">{lang === 'km' ? 'គ្រប់កម្រិតអាទិភាព' : 'All Priorities'}</option>
+            <option value="all">{lang === 'km' ? 'គ្រប់អាទិភាព' : 'All Priorities'}</option>
             <option value="Low">{t.low}</option>
             <option value="Medium">{t.medium}</option>
             <option value="High">{t.high}</option>
@@ -616,45 +617,45 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
           {/* Sort Control */}
           <button
             onClick={() => setSortAsc(!sortAsc)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 flex items-center space-x-1 hover:bg-slate-50"
+            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 flex items-center space-x-1 hover:bg-slate-50 text-xs"
             title={lang === 'km' ? 'ប្តូរទិសដៅតម្រៀប' : 'Toggle sort direction'}
           >
-            <ArrowUpDown className="w-3.5 h-3.5" />
+            <ArrowUpDown className="w-3 h-3" />
             <span>
-              {sortField === 'dueDate' ? (lang === 'km' ? 'កាលបរិច្ឆេទ' : 'Due Date') : sortField === 'completionPercentage' ? (lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress') : (lang === 'km' ? 'អាទិភាព' : 'Priority')} ({sortAsc ? (lang === 'km' ? 'ឡើង' : 'Asc') : (lang === 'km' ? 'ចុះ' : 'Desc')})
+              {sortField === 'dueDate' ? (lang === 'km' ? 'កាលបរិច្ឆេទ' : 'Due') : sortField === 'completionPercentage' ? (lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress') : (lang === 'km' ? 'អាទិភាព' : 'Priority')} ({sortAsc ? '↑' : '↓'})
             </span>
           </button>
         </div>
       </div>
 
-      {/* Owned Responsibilities & Collaboration Guidance Banner */}
+      {/* Owned Responsibilities & Collaboration Guidance Banner - Compact */}
       {filterOwnership === 'my-owned' && (
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white p-5 rounded-xl shadow-xs border border-blue-800/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-400/30">
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>{lang === 'km' ? 'ការគ្រប់គ្រងផែនការ និងភារកិច្ចផ្ទាល់ខ្លួន' : 'Owned Action Plans & Task Responsibilities'}</span>
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white p-3 sm:p-3.5 rounded-xl shadow-2xs border border-blue-800/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5">
+          <div className="space-y-1 max-w-2xl min-w-0">
+            <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-semibold border border-blue-400/30">
+              <UserCheck className="w-3 h-3" />
+              <span>{lang === 'km' ? 'ការគ្រប់គ្រងផែនការផ្ទាល់ខ្លួន' : 'Owned Action Plans & Responsibilities'}</span>
             </div>
-            <h3 className="text-sm md:text-base font-bold text-white">
+            <h3 className="text-xs sm:text-sm font-bold text-white leading-tight">
               {lang === 'km' ? 'ការគ្រប់គ្រងសម្រួលការងារ វឌ្ឍនភាព និងការតម្រឹមគោលដៅស្ថាប័ន' : 'Direct Access, Priority Management & Team Collaboration'}
             </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-[11px] text-slate-300 leading-snug line-clamp-2">
               {lang === 'km'
-                ? 'បុគ្គលិកអាចចូលមើលផែនការសកម្មភាព និងកិច្ចការដែលខ្លួនគ្រប់គ្រងដោយផ្ទាល់យ៉ាងងាយស្រួល។ មុខងារនេះជួយសម្រួលការគ្រប់គ្រងទំនួលខុសត្រូវ តាមដានវឌ្ឍនភាព និងរក្សាការរៀបចំទុកដាក់។ លើសពីនេះ លោកអ្នកអាចចែករំលែកផែនការជាមួយសមាជិកក្រុម ឬអ្នកគ្រប់គ្រងដើម្បីទទួលបានមតិកែលម្អ និងជំនួយគាំទ្រ ព្រមទាំងធ្វើការត្រួតពិនិត្យទៀងទាត់ដើម្បីឱ្យស្របតាមគោលបំណងរបស់ស្ថាប័ន។'
-                : 'Employees can easily access their owned Action Plans and Tasks through the designated platform. This feature allows for streamlined management of responsibilities, ensuring that individuals can track their progress and stay organized. By having direct access, employees can prioritize their tasks effectively and make necessary adjustments to meet deadlines. Additionally, tools for collaboration enable sharing with team members or supervisors for feedback and support, while encouraging regular reviews to stay aligned with organizational goals.'}
+                ? 'បុគ្គលិកអាចចូលមើលផែនការសកម្មភាព និងកិច្ចការដែលខ្លួនគ្រប់គ្រងដោយផ្ទាល់យ៉ាងងាយស្រួល តាមដានវឌ្ឍនភាព និងចែករំលែកជាមួយអ្នកគ្រប់គ្រងដើម្បីទទួលបានមតិកែលម្អ។'
+                : 'Directly track, manage and share your owned action plans with team leaders and supervisors for instant feedback and periodic goal alignment.'}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
             {myOwnedPlansCount > 0 && (
               <button
                 onClick={() => {
                   const firstOwned = plans.find(p => p.ownerId === currentUser.id || p.createdById === currentUser.id);
                   if (firstOwned) setCollaborationPlan(firstOwned);
                 }}
-                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition active:scale-95"
               >
-                <UsersIcon className="w-3.5 h-3.5 text-blue-300" />
-                <span>{lang === 'km' ? 'ចែករំលែកជាមួយអ្នកគ្រប់គ្រង' : 'Collaborate / Share'}</span>
+                <UsersIcon className="w-3 h-3 text-blue-300" />
+                <span>{lang === 'km' ? 'ចែករំលែក' : 'Collaborate'}</span>
               </button>
             )}
             {myOwnedPlansCount > 0 && (
@@ -663,36 +664,175 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                   const firstOwned = plans.find(p => p.ownerId === currentUser.id || p.createdById === currentUser.id);
                   if (firstOwned) setGoalReviewPlan(firstOwned);
                 }}
-                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs active:scale-95"
               >
-                <Target className="w-3.5 h-3.5 text-white" />
-                <span>{lang === 'km' ? 'ត្រួតពិនិត្យគោលដៅទៀងទាត់' : 'Periodic Review'}</span>
+                <Target className="w-3 h-3 text-white" />
+                <span>{lang === 'km' ? 'ត្រួតពិនិត្យ' : 'Goal Review'}</span>
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Plans Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Plans Container: Mobile Native Cards + Desktop Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+        {/* MOBILE CARD LIST (Hidden on tablet/desktop, Clean App Card List on Mobile) */}
+        <div className="block sm:hidden divide-y divide-slate-100">
+          {paginatedPlans.length === 0 ? (
+            <div className="p-6 text-center text-slate-400">
+              <Layers className="w-8 h-8 mx-auto mb-1.5 text-slate-300" />
+              <p className="text-xs font-bold text-slate-700">No action plans found</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Try adjusting filters or create a new plan.</p>
+            </div>
+          ) : (
+            paginatedPlans.map(plan => {
+              const dept = departments.find(d => d.id === plan.departmentId);
+              const owner = users.find(u => u.id === plan.ownerId);
+              const isOverdue = plan.dueDate < new Date().toISOString().split('T')[0] && plan.status !== 'Completed';
+              const canEdit = db.canEditPlan(currentUser, plan);
+              const canDelete = db.canDeletePlan(currentUser, plan);
+
+              return (
+                <div key={plan.id} className="p-3 space-y-2 hover:bg-slate-50/60 transition">
+                  <div className="flex items-start justify-between gap-1.5">
+                    <div className="min-w-0 pr-1">
+                      <div className="flex items-center space-x-1.5 flex-wrap">
+                        <span className="font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded text-[10px] border border-blue-200">
+                          {plan.planNumber}
+                        </span>
+                        {(plan.ownerId === currentUser.id || plan.createdById === currentUser.id) && (
+                          <span className="inline-flex items-center space-x-0.5 px-1 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <UserCheck className="w-2.5 h-2.5" />
+                            <span>Owner</span>
+                          </span>
+                        )}
+                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${statusBadgeColors[plan.status]}`}>
+                          {plan.status}
+                        </span>
+                      </div>
+                      <h4 
+                        onClick={() => handleInspectPlan(plan)}
+                        className="font-bold text-xs text-slate-900 mt-1 hover:text-blue-600 cursor-pointer line-clamp-2"
+                      >
+                        {plan.title}
+                      </h4>
+                    </div>
+
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] border shrink-0 ${priorityBadgeColors[plan.priority]}`}>
+                      {plan.priority}
+                    </span>
+                  </div>
+
+                  {/* Progress Bar & Stats */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-slate-500">
+                      <span>Progress</span>
+                      <span className="font-bold font-mono text-slate-900">{plan.completionPercentage}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          plan.completionPercentage === 100 ? 'bg-emerald-500' : 'bg-blue-600'
+                        }`}
+                        style={{ width: `${plan.completionPercentage}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Meta strip */}
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500 pt-1 border-t border-slate-100">
+                    <span className="truncate max-w-[140px]">{dept?.name} • {owner?.name}</span>
+                    <span className={isOverdue ? 'text-rose-600 font-bold' : ''}>
+                      {isOverdue ? 'Overdue: ' : 'Due: '}{plan.dueDate}
+                    </span>
+                  </div>
+
+                  {/* Mobile Action Buttons Strip */}
+                  <div className="flex items-center justify-between pt-1 gap-1">
+                    <div className="flex items-center space-x-1">
+                      {canEdit && plan.status !== 'Completed' && (
+                        <button
+                          type="button"
+                          onClick={() => handleQuickCompletePlan(plan.id)}
+                          className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200"
+                        >
+                          ✓ 100%
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setProgressPlan(plan)}
+                        className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium text-[10px]"
+                      >
+                        Progress
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCollaborationPlan(plan)}
+                        className="px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px]"
+                      >
+                        Collab
+                      </button>
+                    </div>
+
+                    <div className="flex items-center space-x-1">
+                      <button
+                        type="button"
+                        onClick={() => handleInspectPlan(plan)}
+                        className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px]"
+                      >
+                        Details
+                      </button>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(plan)}
+                          className="p-1 rounded-md text-slate-400 hover:text-blue-600"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(plan, e);
+                          }}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-600"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* DESKTOP TABLE VIEW (Hidden on mobile, pristine and clean on sm and up) */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                <th className="py-3 px-4">{lang === 'km' ? 'លេខកូដ និងចំណងជើងផែនការ' : 'Plan No. & Title'}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'នាយកដ្ឋាន និងអ្នកទទួលខុសត្រូវ' : 'Department & Owner'}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'បន្ទាត់ពេលវេលា' : 'Timeline'}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'អាទិភាព' : 'Priority'}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress'}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'ស្ថានភាព និងការអនុម័ត' : 'Status & Approval'}</th>
-                <th className="py-3 px-4 text-right">{lang === 'km' ? 'សកម្មភាព' : 'Actions'}</th>
+                <th className="py-2.5 px-3.5">{lang === 'km' ? 'លេខកូដ និងចំណងជើងផែនការ' : 'Plan No. & Title'}</th>
+                <th className="py-2.5 px-3.5">{lang === 'km' ? 'នាយកដ្ឋាន និងអ្នកទទួលខុសត្រូវ' : 'Department & Owner'}</th>
+                <th className="py-2.5 px-3.5">{lang === 'km' ? 'បន្ទាត់ពេលវេលា' : 'Timeline'}</th>
+                <th className="py-2.5 px-3.5">{lang === 'km' ? 'អាទិភាព' : 'Priority'}</th>
+                <th className="py-2.5 px-3.5">{lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress'}</th>
+                <th className="py-2.5 px-3.5">{lang === 'km' ? 'ស្ថានភាព និងការអនុម័ត' : 'Status & Approval'}</th>
+                <th className="py-2.5 px-3.5 text-right">{lang === 'km' ? 'សកម្មភាព' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {paginatedPlans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
-                    <div className="max-w-md mx-auto space-y-2">
+                  <td colSpan={7} className="py-10 text-center text-slate-400">
+                    <div className="max-w-md mx-auto space-y-1.5">
                       <p className="font-semibold text-slate-700 text-sm">
                         {currentUser.role === 'Employee' 
                           ? (lang === 'km' ? 'មិនមានផែនការដែលជាកម្មសិទ្ធិផ្ទាល់ខ្លួនទេ' : 'No Owned Action Plans Found')
@@ -719,13 +859,13 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                   return (
                     <tr key={plan.id} className="hover:bg-slate-50/80 transition">
                       {/* Plan No & Title */}
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3.5">
                         <div className="flex items-center space-x-2">
-                          <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-[11px]">
+                          <span className="font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 text-[11px]">
                             {plan.planNumber}
                           </span>
                           {(plan.ownerId === currentUser.id || plan.createdById === currentUser.id) && (
-                            <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                            <span className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                               <UserCheck className="w-3 h-3" />
                               <span>{lang === 'km' ? 'ផែនការផ្ទាល់ខ្លួន' : 'My Plan'}</span>
                             </span>
@@ -738,12 +878,12 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                           </span>
                         </div>
                         {plan.kpi && (
-                          <div className="text-[11px] text-slate-500 mt-1 line-clamp-1">
+                          <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
                             KPI: <span className="text-slate-700 font-medium">{plan.kpi} ({plan.kpiActual}/{plan.kpiTarget} {plan.kpiUnit})</span>
                           </div>
                         )}
                         {plan.alignmentStatus && (
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                             <span className={`inline-flex items-center space-x-1 px-1.5 py-0.2 rounded text-[10px] font-semibold ${
                               plan.alignmentStatus === 'Fully Aligned' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
                               plan.alignmentStatus === 'Review Needed' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
@@ -770,7 +910,7 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                       </td>
 
                       {/* Department & Owner */}
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3.5">
                         <div className="font-medium text-slate-800">{dept?.name}</div>
                         <div className="text-[11px] text-slate-500 flex items-center space-x-1 mt-0.5">
                           <UserIcon className="w-3 h-3 text-slate-400" />
@@ -781,7 +921,7 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                       </td>
 
                       {/* Timeline */}
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3.5">
                         <div className="text-slate-700 font-medium">{plan.dueDate}</div>
                         <div className={`text-[10px] mt-0.5 ${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-400'}`}>
                           {isOverdue ? (lang === 'km' ? 'ហួសកាលកំណត់' : 'Overdue') : `${lang === 'km' ? 'ចាប់ផ្តើម៖' : 'Start:'} ${plan.startDate}`}
@@ -789,18 +929,18 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                       </td>
 
                       {/* Priority */}
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3.5">
                         <span className={`px-2 py-0.5 rounded text-[11px] border ${priorityBadgeColors[plan.priority]}`}>
                           {plan.priority === 'Critical' ? t.critical : plan.priority === 'High' ? t.high : plan.priority === 'Medium' ? t.medium : t.low}
                         </span>
                       </td>
 
                       {/* Progress Bar */}
-                      <td className="py-3 px-4 min-w-[120px]">
-                        <div className="flex items-center justify-between text-[11px] mb-1">
+                      <td className="py-2.5 px-3.5 min-w-[120px]">
+                        <div className="flex items-center justify-between text-[11px] mb-0.5">
                           <span className="font-mono font-bold text-slate-800">{plan.completionPercentage}%</span>
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                           <div 
                             className={`h-full rounded-full transition-all duration-300 ${
                               plan.completionPercentage === 100 ? 'bg-emerald-500' : 'bg-blue-600'
@@ -811,91 +951,91 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                       </td>
 
                       {/* Status & Approval */}
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3.5">
                         <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${statusBadgeColors[plan.status]}`}>
                           {plan.status === 'Draft' ? t.draft : plan.status === 'Submitted' ? t.submitted : plan.status === 'Approved' ? t.approved : plan.status === 'In Progress' ? t.inProgress : plan.status === 'Completed' ? t.completed : plan.status === 'Rejected' ? t.rejected : plan.status}
                         </span>
-                        <div className="text-[10px] text-slate-500 mt-1">
+                        <div className="text-[10px] text-slate-500 mt-0.5">
                           {lang === 'km' ? 'ការអនុម័ត៖' : 'Approval:'} <span className="font-medium text-slate-700">{plan.approvalStatus}</span>
                         </div>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-2.5 px-3.5 text-right">
                         <div className="flex items-center justify-end space-x-1">
                           {/* Collaborate / Share with Supervisor or Team */}
                           <button
                             onClick={() => setCollaborationPlan(plan)}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                            className="p-1 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
                             title={lang === 'km' ? 'ចែករំលែក & ស្នើសុំមតិសហការ' : 'Share & Request Feedback / Support'}
                           >
-                            <MessageSquare className="w-4 h-4" />
+                            <MessageSquare className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Goal Alignment & Periodic Review */}
                           <button
                             onClick={() => setGoalReviewPlan(plan)}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                            className="p-1 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50"
                             title={lang === 'km' ? 'ត្រួតពិនិត្យការតម្រឹមគោលដៅ និងកាលបរិច្ឆេទ' : 'Goal Alignment & Review Checkpoint'}
                           >
-                            <Target className="w-4 h-4" />
+                            <Target className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Inspect Details */}
                           <button
                             onClick={() => handleInspectPlan(plan)}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-slate-100"
+                            className="p-1 rounded-md text-slate-500 hover:text-blue-600 hover:bg-slate-100"
                             title={lang === 'km' ? 'មើលលម្អិត' : 'View Details'}
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Quick Complete 1-Click */}
                           {canEdit && plan.status !== 'Completed' && (
                             <button
                               onClick={() => handleQuickCompletePlan(plan.id)}
-                              className="p-1.5 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                              className="p-1 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                               title={lang === 'km' ? 'បញ្ចប់ ១០០% ភ្លាមៗ (១ ចុច)' : '1-Click Complete (100%)'}
                             >
-                              <Check className="w-4 h-4 stroke-[3]" />
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </button>
                           )}
 
                           {/* Update Progress */}
                           <button
                             onClick={() => setProgressPlan(plan)}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-emerald-600 hover:bg-slate-100"
+                            className="p-1 rounded-md text-slate-500 hover:text-emerald-600 hover:bg-slate-100"
                             title={lang === 'km' ? 'កត់ត្រាវឌ្ឍនភាព' : 'Update Progress'}
                           >
-                            <TrendingUp className="w-4 h-4" />
+                            <TrendingUp className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Approval Modal */}
                           <button
                             onClick={() => setApprovalPlan(plan)}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-slate-100"
+                            className="p-1 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-slate-100"
                             title={lang === 'km' ? 'ដំណើរការអនុម័ត' : 'Workflow Approval'}
                           >
-                            <ShieldCheck className="w-4 h-4" />
+                            <ShieldCheck className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Duplicate */}
                           <button
                             onClick={() => handleDuplicate(plan.id)}
-                            className="p-1.5 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                            className="p-1 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                             title={lang === 'km' ? 'ចម្លងផែនការ' : 'Duplicate Plan'}
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Edit */}
                           {canEdit && (
                             <button
                               onClick={() => handleOpenEdit(plan)}
-                              className="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-slate-100"
+                              className="p-1 rounded-md text-slate-500 hover:text-blue-600 hover:bg-slate-100"
                               title={lang === 'km' ? 'កែប្រែផែនការ' : 'Edit Plan'}
                             >
-                              <Edit3 className="w-4 h-4" />
+                              <Edit3 className="w-3.5 h-3.5" />
                             </button>
                           )}
 
@@ -906,10 +1046,10 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
                                 e.stopPropagation();
                                 handleDelete(plan, e);
                               }}
-                              className="p-1.5 rounded-md text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition cursor-pointer"
+                              className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition cursor-pointer"
                               title={lang === 'km' ? 'ទុកក្នុងបណ្ណសារ / លុប' : 'Archive Plan'}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>

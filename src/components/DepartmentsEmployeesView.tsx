@@ -344,16 +344,16 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5 sm:space-y-3.5 max-w-7xl mx-auto">
       {/* Toast / Error Banner */}
       {toastMessage && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-xs">
+        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-2xs">
           <span>{toastMessage}</span>
           <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-slate-600 px-1">✕</button>
         </div>
       )}
       {deleteErrorMessage && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between shadow-xs">
+        <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between shadow-2xs">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{deleteErrorMessage}</span>
@@ -363,10 +363,10 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
       )}
 
       {/* Header & Sub-Tabs */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center space-x-2">
               <span>
                 {activeSubTab === 'departments' 
                   ? t.departments 
@@ -375,7 +375,7 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
                   : (lang === 'km' ? 'មែកធាងឋានានុក្រម និងផែនការការងារ' : 'Organizational Treeview Plan')}
               </span>
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               {activeSubTab === 'departments' 
                 ? (lang === 'km' ? 'រៀបចំរចនាសម្ព័ន្ធអង្គភាព លេខកូដ និងការចាត់តាំងប្រធាននាយកដ្ឋាន។' : 'Organize organizational units, codes, and department head assignments.') 
                 : activeSubTab === 'employees'
@@ -387,9 +387,9 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
           {activeSubTab !== 'treeview' && (activeSubTab === 'departments' ? isSuperAdminOrAdmin : canAddEmployee) && (
             <button
               onClick={activeSubTab === 'departments' ? handleOpenCreateDept : handleOpenCreateEmp}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition self-start md:self-auto"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition self-start md:self-auto"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>
                 {activeSubTab === 'departments' 
                   ? (lang === 'km' ? 'បន្ថែមនាយកដ្ឋាន' : 'Add Department') 
@@ -400,12 +400,12 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
         </div>
 
         {/* View Switcher Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-slate-100">
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
           <button
             onClick={() => setActiveSubTab('departments')}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
               activeSubTab === 'departments'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-blue-600 text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -420,9 +420,9 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
 
           <button
             onClick={() => setActiveSubTab('employees')}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
               activeSubTab === 'employees'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-blue-600 text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -437,14 +437,14 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
 
           <button
             onClick={() => setActiveSubTab('treeview')}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
               activeSubTab === 'treeview'
-                ? 'bg-indigo-600 text-white shadow-xs'
+                ? 'bg-indigo-600 text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <Network className="w-3.5 h-3.5" />
-            <span>{lang === 'km' ? 'មែកធាងឋានានុក្រម និងផែនការការងារ' : 'Hierarchy Treeview Plan'}</span>
+            <span>{lang === 'km' ? 'មែកធាងឋានានុក្រម' : 'Hierarchy Tree'}</span>
             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
               activeSubTab === 'treeview' ? 'bg-amber-400 text-amber-950' : 'bg-amber-100 text-amber-800'
             }`}>
@@ -543,24 +543,24 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
 
       {/* EMPLOYEES VIEW */}
       {activeSubTab === 'employees' && (
-        <div className="space-y-4">
-          {/* Search & Filter Bar */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
-            <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="space-y-2.5 sm:space-y-3">
+          {/* Filter Bar - Compact */}
+          <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder={lang === 'km' ? 'ស្វែងរកបុគ្គលិកតាមឈ្មោះ អ៊ីមែល តួនាទី...' : 'Search employees by name, email, job title...'}
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                placeholder={lang === 'km' ? 'ស្វែងរកបុគ្គលិក...' : 'Search staff by name, email, role...'}
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
               />
             </div>
 
-            <div className="flex items-center space-x-2 w-full md:w-auto">
-              <div className="flex items-center space-x-1.5 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                <Filter className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-[11px] font-semibold text-slate-500">
+            <div className="flex items-center space-x-1.5 w-full sm:w-auto">
+              <div className="flex items-center space-x-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                <Filter className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] font-semibold text-slate-500">
                   {lang === 'km' ? 'តួនាទី៖' : 'Role:'}
                 </span>
                 <select
@@ -568,7 +568,7 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
                   onChange={e => setRoleFilter(e.target.value)}
                   className="bg-transparent text-xs font-medium text-slate-700 focus:outline-hidden"
                 >
-                  <option value="all">{lang === 'km' ? 'គ្រប់តួនាទីទាំងអស់' : 'All Roles'}</option>
+                  <option value="all">{lang === 'km' ? 'គ្រប់តួនាទី' : 'All Roles'}</option>
                   <option value="Super Admin">{getRoleLabel('Super Admin')}</option>
                   <option value="Administrator">{getRoleLabel('Administrator')}</option>
                   <option value="Department Manager">{getRoleLabel('Department Manager')}</option>
@@ -578,14 +578,14 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
                 </select>
               </div>
 
-              <div className="flex items-center space-x-1.5 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                <span className="text-[11px] font-semibold text-slate-500">
+              <div className="flex items-center space-x-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                <span className="text-[10px] font-semibold text-slate-500">
                   {lang === 'km' ? 'នាយកដ្ឋាន៖' : 'Dept:'}
                 </span>
                 <select
                   value={deptFilter}
                   onChange={e => setDeptFilter(e.target.value)}
-                  className="bg-transparent text-xs font-medium text-slate-700 focus:outline-hidden max-w-[140px]"
+                  className="bg-transparent text-xs font-medium text-slate-700 focus:outline-hidden max-w-[130px]"
                 >
                   <option value="all">{lang === 'km' ? 'គ្រប់នាយកដ្ឋាន' : 'All Depts'}</option>
                   {departments.map(d => (
@@ -596,17 +596,115 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
+          {/* Employee Directory: Mobile App Cards + Desktop Table */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+            {/* MOBILE CARD VIEW (Phones) */}
+            <div className="block sm:hidden divide-y divide-slate-100">
+              {users
+                .filter(u => {
+                  const matchesSearch = 
+                    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (u.employeeId && u.employeeId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (u.position && u.position.toLowerCase().includes(searchTerm.toLowerCase()));
+                  const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+                  const matchesDept = deptFilter === 'all' || u.departmentId === deptFilter;
+                  return matchesSearch && matchesRole && matchesDept;
+                })
+                .map(u => {
+                  const dept = departments.find(d => d.id === u.departmentId);
+                  return (
+                    <div key={u.id} className="p-3 space-y-2 hover:bg-slate-50/60 transition">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center space-x-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                            {u.name.split(' ').map(n => n[0]).join('')}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center space-x-1.5 flex-wrap">
+                              <span className="font-bold text-slate-900 text-xs truncate">{u.name}</span>
+                              {u.employeeId && (
+                                <span className="font-mono text-[9px] text-blue-700 bg-blue-50 border border-blue-200 px-1 py-0.2 rounded font-semibold">
+                                  {u.employeeId}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 truncate">
+                              {u.position || (lang === 'km' ? 'បុគ្គលិក' : 'Staff Member')}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${
+                          u.status === 'Inactive' || u.isActive === false
+                            ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        }`}>
+                          {u.status === 'Inactive' || u.isActive === false ? 'Inactive' : 'Active'}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 gap-1">
+                        <span className="bg-slate-100 px-1.5 py-0.2 rounded text-[10px] text-slate-700 font-medium">
+                          {u.role}
+                        </span>
+                        <span className="truncate max-w-[150px]">{dept?.name || 'Unassigned'}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 gap-1">
+                        <div className="flex items-center space-x-2 text-[10px] text-slate-500 truncate">
+                          <span className="truncate">{u.email}</span>
+                        </div>
+
+                        <div className="flex items-center space-x-1 shrink-0">
+                          {canManageEmployee(u) && (
+                            <>
+                              <button
+                                onClick={() => handleOpenEditEmp(u)}
+                                className="p-1 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition"
+                                title="Edit"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleOpenChangePassword(u)}
+                                className="p-1 rounded-md text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition"
+                                title="Password"
+                              >
+                                <KeyRound className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                          {isSuperAdminOrAdmin && u.id !== currentUser.id && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEmp(u);
+                              }}
+                              className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (Tablets & Desktops) */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                    <th className="py-3 px-4">{lang === 'km' ? 'បុគ្គលិក' : 'Employee'}</th>
-                    <th className="py-3 px-4">{lang === 'km' ? 'តួនាទី' : 'Role'}</th>
-                    <th className="py-3 px-4">{lang === 'km' ? 'នាយកដ្ឋាន' : 'Department'}</th>
-                    <th className="py-3 px-4">{lang === 'km' ? 'ទំនាក់ទំនង' : 'Contact'}</th>
-                    <th className="py-3 px-4">{lang === 'km' ? 'ស្ថានភាព' : 'Status'}</th>
-                    <th className="py-3 px-4 text-right">{lang === 'km' ? 'សកម្មភាព' : 'Actions'}</th>
+                    <th className="py-2.5 px-3.5">{lang === 'km' ? 'បុគ្គលិក' : 'Employee'}</th>
+                    <th className="py-2.5 px-3.5">{lang === 'km' ? 'តួនាទី' : 'Role'}</th>
+                    <th className="py-2.5 px-3.5">{lang === 'km' ? 'នាយកដ្ឋាន' : 'Department'}</th>
+                    <th className="py-2.5 px-3.5">{lang === 'km' ? 'ទំនាក់ទំនង' : 'Contact'}</th>
+                    <th className="py-2.5 px-3.5">{lang === 'km' ? 'ស្ថានភាព' : 'Status'}</th>
+                    <th className="py-2.5 px-3.5 text-right">{lang === 'km' ? 'សកម្មភាព' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">

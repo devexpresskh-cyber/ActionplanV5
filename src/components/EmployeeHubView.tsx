@@ -83,6 +83,7 @@ export const EmployeeHubView: React.FC<EmployeeHubViewProps> = ({
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [isEditShiftModalOpen, setIsEditShiftModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [hubViewMode, setHubViewMode] = useState<'all' | 'shifts' | 'tasks' | 'plans'>('all');
 
   // Real-time clock update
   useEffect(() => {
@@ -271,354 +272,397 @@ export const EmployeeHubView: React.FC<EmployeeHubViewProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-12">
+    <div className="max-w-3xl mx-auto space-y-2.5 sm:space-y-3 pb-8">
       {/* Toast notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-4 z-50 bg-slate-900/95 text-white px-4 py-2.5 rounded-xl shadow-xl border border-slate-800 flex items-center space-x-2.5 animate-in slide-in-from-top-3 text-xs font-semibold backdrop-blur-xs">
+        <div className="fixed top-20 right-4 z-50 bg-slate-900/95 text-white px-3.5 py-2 rounded-xl shadow-xl border border-slate-800 flex items-center space-x-2.5 animate-in slide-in-from-top-3 text-xs font-semibold backdrop-blur-xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Greeting & Mobile Status Bar */}
-      <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 rounded-3xl p-5 sm:p-7 text-white shadow-xl shadow-blue-900/20 relative overflow-hidden">
-        {/* Subtle background ambient patterns */}
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute top-0 right-1/4 w-32 h-32 bg-blue-400/10 rounded-full blur-xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center space-x-2 mb-1">
-              <span className="px-2 py-0.5 rounded-md bg-white/20 text-blue-100 text-[11px] font-semibold tracking-wide backdrop-blur-xs">
-                {currentUser.role}
-              </span>
-              <span className="text-blue-200 text-xs">• {departmentName}</span>
+      {/* Top Greeting & Mobile Status Bar - Clean, Compact & Modern */}
+      <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-2xl p-3 sm:p-3.5 text-white shadow-md shadow-blue-900/15 relative overflow-hidden">
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0 border border-white/20 shadow-xs">
+              {currentUser.name.split(' ').map(n => n[0]).join('')}
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              Hello, {currentUser.name}!
-            </h2>
-            <p className="text-xs sm:text-sm text-blue-100/90 mt-1 max-w-md">
-              Here is your daily workspace. Clock your shifts, track assigned focus tasks, and submit fast updates in one tap.
-            </p>
-          </div>
-
-          {/* Real-time Clock Widget */}
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 border border-white/15 text-center sm:text-right shrink-0 flex sm:flex-col items-center sm:items-end justify-between">
-            <div className="text-left sm:text-right">
-              <span className="text-[11px] font-medium text-blue-200 block">{currentDate}</span>
-              <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white block">
-                {currentTime || '--:--:--'}
-              </span>
-            </div>
-            <div className="mt-0 sm:mt-1.5 flex items-center space-x-1 text-[11px] text-blue-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Cambodia Standard Time</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Primary Shift Punch-In / Punch-Out Card (Strategy 1, 2, 4) */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2.5 rounded-xl ${
-              isClockedIn 
-                ? 'bg-emerald-100 text-emerald-700' 
-                : isShiftClosed 
-                ? 'bg-slate-100 text-slate-700' 
-                : 'bg-amber-100 text-amber-700'
-            }`}>
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-bold text-slate-900">Today's Attendance Status</h3>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  isClockedIn 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                    : isShiftClosed 
-                    ? 'bg-slate-100 text-slate-700' 
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                  {isClockedIn ? 'Active On Duty' : isShiftClosed ? 'Shift Completed' : 'Not Clocked In'}
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1.5 flex-wrap">
+                <span className="text-xs sm:text-sm font-extrabold truncate text-white">{currentUser.name}</span>
+                <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-blue-100 text-[10px] font-semibold">
+                  {currentUser.role}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {todayAtt?.workShift 
-                  ? `Assigned: ${todayAtt.workShift}` 
-                  : `Standard Shifts: Morning (08:00 - 12:00) • Evening (13:00 - 17:00)`}
+              <p className="text-[11px] text-blue-200 truncate mt-0.5">
+                {departmentName}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsWebPushModalOpen(true)}
-              className="self-start sm:self-auto flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-xs font-semibold text-indigo-700 transition"
-              title="Web Push Attendance Alerts & Settings"
-            >
-              <Bell className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Push Alerts</span>
-            </button>
-
-            {todayAtt && (
-              <button
-                onClick={() => {
-                  setEditingRecord(todayAtt);
-                  setIsEditShiftModalOpen(true);
-                }}
-                className="self-start sm:self-auto flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition"
-                title="Edit shift type, clock timings or hours"
-              >
-                <Pencil className="w-3.5 h-3.5 text-blue-600" />
-                <span>Edit Shift</span>
-              </button>
-            )}
+          {/* Compact Clock & Date */}
+          <div className="text-right shrink-0 bg-white/10 backdrop-blur-xs px-2.5 py-1 rounded-xl border border-white/15">
+            <span className="text-xs sm:text-sm font-black font-mono tracking-tight text-white block">
+              {currentTime || '--:--:--'}
+            </span>
+            <span className="text-[10px] text-blue-200 block -mt-0.5">
+              {currentDate}
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Action Buttons for Punching In / Out */}
-        <div className="pt-4 space-y-3">
-          {/* Active Shift Clock-Out Banner if currently clocked in */}
+      {/* Mobile App Segmented Navigation Bar - Zero Dead Scroll */}
+      <div className="flex items-center gap-1 p-1 bg-slate-200/80 rounded-xl text-xs font-semibold select-none shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setHubViewMode('all')}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-center transition ${
+            hubViewMode === 'all'
+              ? 'bg-white text-slate-900 shadow-xs font-bold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          {lang === 'km' ? 'ទាំងអស់' : 'All'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setHubViewMode('shifts')}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-center transition ${
+            hubViewMode === 'shifts'
+              ? 'bg-white text-slate-900 shadow-xs font-bold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          {lang === 'km' ? 'វត្តមាន & វេន' : 'Shifts & Time'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setHubViewMode('tasks')}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-center transition flex items-center justify-center space-x-1 ${
+            hubViewMode === 'tasks'
+              ? 'bg-white text-slate-900 shadow-xs font-bold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>{lang === 'km' ? 'កិច្ចការ' : 'Tasks'}</span>
+          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+            hubViewMode === 'tasks' ? 'bg-blue-100 text-blue-800' : 'bg-slate-300 text-slate-700'
+          }`}>
+            {activeTasks.length}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setHubViewMode('plans')}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-center transition flex items-center justify-center space-x-1 ${
+            hubViewMode === 'plans'
+              ? 'bg-white text-slate-900 shadow-xs font-bold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>{lang === 'km' ? 'ផែនការ' : 'Plans'}</span>
+          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+            hubViewMode === 'plans' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300 text-slate-700'
+          }`}>
+            {myOwnedPlans.length}
+          </span>
+        </button>
+      </div>
+
+      {/* Primary Shift Punch-In / Punch-Out Card - Compact Mobile-App Design */}
+      {(hubViewMode === 'all' || hubViewMode === 'shifts') && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-3 sm:p-3.5 space-y-2.5">
+          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <div className={`p-2 rounded-xl shrink-0 ${
+                isClockedIn 
+                  ? 'bg-emerald-100 text-emerald-700' 
+                  : isShiftClosed 
+                  ? 'bg-slate-100 text-slate-700' 
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                <Clock className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5 flex-wrap">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                    {lang === 'km' ? 'វត្តមាន & វេនការងារ' : "Today's Attendance"}
+                  </h3>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                    isClockedIn 
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                      : isShiftClosed 
+                      ? 'bg-slate-100 text-slate-700' 
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    {isClockedIn ? 'On Duty' : isShiftClosed ? 'Completed' : 'Pending'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 truncate">
+                  Morning (08:00-12:00) • Evening (13:00-17:00)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => onNavigateTab('attendance')}
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 text-cyan-800 text-xs font-bold transition active:scale-95"
+                title="Instant QR Scanner"
+              >
+                <QrCode className="w-3.5 h-3.5 text-cyan-600" />
+                <span className="hidden sm:inline">QR Scan</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsWebPushModalOpen(true)}
+                className="p-1.5 rounded-lg border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 transition"
+                title="Push Alerts"
+              >
+                <Bell className="w-3.5 h-3.5 text-indigo-600" />
+              </button>
+
+              {todayAtt && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingRecord(todayAtt);
+                    setIsEditShiftModalOpen(true);
+                  }}
+                  className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition"
+                  title="Edit Shift"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Clock In / Out Action Rows */}
           {isClockedIn ? (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-emerald-50/70 border border-emerald-300 p-3.5 rounded-xl shadow-xs">
-              <div className="flex items-center space-x-3">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
-                <div className="text-xs text-emerald-900">
-                  <span>Clocked in at <strong className="font-mono font-bold">{todayAtt.checkInTime}</strong></span>
-                  <span className="mx-2">•</span>
-                  <span>Shift: <strong>{todayAtt.shiftType || 'Standard'}</strong></span>
-                  {todayAtt.checkInMethod === 'QR Code' && (
-                    <span className="ml-2 px-1.5 py-0.2 rounded bg-cyan-100 text-cyan-800 text-[10px] font-bold">
-                      QR Scan
-                    </span>
-                  )}
+            <div className="flex items-center justify-between gap-2.5 bg-emerald-50/70 border border-emerald-300 p-2.5 rounded-xl text-xs">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                <div className="text-emerald-900 truncate">
+                  <span>In at <strong className="font-mono font-bold">{todayAtt.checkInTime}</strong></span>
+                  <span className="mx-1">•</span>
+                  <span><strong>{todayAtt.shiftType || 'Standard'}</strong></span>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={handleClockOut}
-                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 active:scale-95 transition"
+                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition shrink-0"
               >
-                Clock Out Now (End {todayAtt.shiftType || 'Shift'})
+                Clock Out Now
               </button>
             </div>
           ) : shiftStatus.bothCompleted ? (
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-900">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-900">
               <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>
-                  <strong>All Shifts Completed Today!</strong> Logged <strong>{shiftStatus.totalHours} hrs</strong> across Morning & Evening shifts.
-                </span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span><strong>Both Shifts Completed Today!</strong> ({shiftStatus.totalHours} hrs)</span>
               </div>
               <button
+                type="button"
                 onClick={() => onNavigateTab('attendance')}
-                className="text-blue-600 hover:underline font-semibold"
+                className="text-blue-600 hover:underline font-bold text-xs"
               >
-                View Attendance
+                Log &gt;
               </button>
             </div>
           ) : (
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-medium">Mandatory Shifts: Morning & Evening Check-In Required</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* Morning Shift */}
+              {shiftStatus.morningCompleted ? (
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-xs">
+                  <div className="flex items-center space-x-2 truncate">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="truncate">
+                      <span className="font-bold text-emerald-900 block truncate">Morning (Done)</span>
+                      <span className="text-[10px] text-emerald-700 font-mono">
+                        {shiftStatus.morningRecord?.checkInTime} - {shiftStatus.morningRecord?.checkOutTime} ({shiftStatus.morningRecord?.workingHours}h)
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">100%</span>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={() => onNavigateTab('attendance')}
-                  className="inline-flex items-center space-x-1 text-cyan-700 hover:text-cyan-800 font-bold"
+                  onClick={() => handleClockIn('Morning')}
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-amber-200 bg-amber-50/60 hover:bg-amber-100/80 transition active:scale-98 text-left"
                 >
-                  <QrCode className="w-3.5 h-3.5 text-cyan-600" />
-                  <span>Instant QR Scanner &gt;</span>
+                  <div className="flex items-center space-x-2 truncate">
+                    <div className="p-1 rounded-md bg-amber-100 text-amber-700">
+                      <Sun className="w-4 h-4" />
+                    </div>
+                    <div className="truncate">
+                      <span className="text-xs font-bold text-amber-900 block">Morning Shift</span>
+                      <span className="text-[10px] text-amber-700 font-mono">08:00 - 12:00</span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-amber-700 flex items-center">
+                    <span>In</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </span>
                 </button>
-              </div>
+              )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Morning Shift Card */}
-                {shiftStatus.morningCompleted ? (
-                  <div className="flex items-center justify-between p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/60 text-xs">
-                    <div className="flex items-center space-x-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <div>
-                        <span className="block font-bold text-emerald-900">Morning Shift Completed</span>
-                        <span className="block text-[11px] text-emerald-700 font-mono">
-                          {shiftStatus.morningRecord?.checkInTime} - {shiftStatus.morningRecord?.checkOutTime} ({shiftStatus.morningRecord?.workingHours}h)
-                        </span>
-                      </div>
+              {/* Evening Shift */}
+              {shiftStatus.eveningCompleted ? (
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-xs">
+                  <div className="flex items-center space-x-2 truncate">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="truncate">
+                      <span className="font-bold text-emerald-900 block truncate">Evening (Done)</span>
+                      <span className="text-[10px] text-emerald-700 font-mono">
+                        {shiftStatus.eveningRecord?.checkInTime} - {shiftStatus.eveningRecord?.checkOutTime} ({shiftStatus.eveningRecord?.workingHours}h)
+                      </span>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Done</span>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => handleClockIn('Morning')}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100/80 transition group active:scale-98 text-left"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-amber-100 text-amber-700 group-hover:scale-110 transition">
-                        <Sun className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <span className="block text-xs font-bold text-amber-900">Clock In: Morning Shift</span>
-                        <span className="block text-[11px] text-amber-700/80 font-mono">08:00 - 12:00 (Grace 08:15)</span>
-                      </div>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">100%</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleClockIn('Evening')}
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/80 transition active:scale-98 text-left"
+                >
+                  <div className="flex items-center space-x-2 truncate">
+                    <div className="p-1 rounded-md bg-indigo-100 text-indigo-700">
+                      <Moon className="w-4 h-4" />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-amber-600 group-hover:translate-x-0.5 transition" />
-                  </button>
-                )}
-
-                {/* Evening Shift Card */}
-                {shiftStatus.eveningCompleted ? (
-                  <div className="flex items-center justify-between p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/60 text-xs">
-                    <div className="flex items-center space-x-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <div>
-                        <span className="block font-bold text-emerald-900">Evening Shift Completed</span>
-                        <span className="block text-[11px] text-emerald-700 font-mono">
-                          {shiftStatus.eveningRecord?.checkInTime} - {shiftStatus.eveningRecord?.checkOutTime} ({shiftStatus.eveningRecord?.workingHours}h)
-                        </span>
-                      </div>
+                    <div className="truncate">
+                      <span className="text-xs font-bold text-indigo-900 block">Evening Shift</span>
+                      <span className="text-[10px] text-indigo-700 font-mono">13:00 - 17:00</span>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Done</span>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => handleClockIn('Evening')}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/80 transition group active:scale-98 text-left"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700 group-hover:scale-110 transition">
-                        <Moon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <span className="block text-xs font-bold text-indigo-900">Clock In: Evening Shift</span>
-                        <span className="block text-[11px] text-indigo-700/80 font-mono">13:00 - 17:00 (Grace 13:15)</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-indigo-600 group-hover:translate-x-0.5 transition" />
-                  </button>
-                )}
-              </div>
+                  <span className="text-xs font-bold text-indigo-700 flex items-center">
+                    <span>In</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </span>
+                </button>
+              )}
             </div>
           )}
 
-          {/* Telegram Reminder Alerts Status Strip */}
-          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center space-x-2">
-              <Send className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-              <span className="text-slate-600 font-medium">
-                Telegram Check-in Alert:
-              </span>
-              <span className="font-mono text-slate-800 font-semibold bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded text-[11px]">
-                {currentUser.telegramHandle || (currentUser.telegramChatId ? `Chat ID: ${currentUser.telegramChatId}` : 'Not Linked')}
-              </span>
-              <span className="text-[11px] text-slate-400 hidden sm:inline">
-                (Reminds unclocked staff • No auto-check in)
+          {/* Telegram Reminder Bar - Compact Strip */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="flex items-center space-x-1.5 truncate">
+              <Send className="w-3 h-3 text-sky-500 shrink-0" />
+              <span className="truncate">Telegram:</span>
+              <span className="font-mono text-slate-700 font-semibold bg-slate-100 px-1.5 py-0.2 rounded text-[10px] truncate">
+                {currentUser.telegramHandle || (currentUser.telegramChatId ? `ID: ${currentUser.telegramChatId}` : 'Not Linked')}
               </span>
             </div>
             <button
+              type="button"
               onClick={() => setIsTelegramModalOpen(true)}
-              className="text-[11px] font-semibold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition active:scale-95"
+              className="text-[11px] font-semibold text-sky-700 hover:text-sky-900 transition shrink-0 ml-2"
             >
-              Telegram Alert Center
+              Alert Center &gt;
             </button>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Quick Action Dock - Mobile-First Grid (Strategy 4) */}
-      <div>
-        <div className="flex items-center justify-between mb-2 px-1">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quick Action Shortcuts</h3>
-          <span className="text-[11px] text-slate-400">1-Tap Shortcuts</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-          {onOpenVoiceAssistant && (
+      {/* Quick Action Dock - Compact Native Mobile App Icons Row */}
+      {(hubViewMode === 'all' || hubViewMode === 'shifts') && (
+        <div>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {onOpenVoiceAssistant && (
+              <button
+                type="button"
+                onClick={onOpenVoiceAssistant}
+                className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border border-indigo-200/80 bg-gradient-to-b from-indigo-50/70 to-white hover:border-indigo-400 transition active:scale-95 text-center group shadow-2xs"
+              >
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center mb-1 group-hover:scale-105 transition shadow-2xs">
+                  <Mic className="w-4 h-4" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-800 truncate w-full">{lang === 'km' ? 'សំឡេង' : 'Voice AI'}</span>
+              </button>
+            )}
+
             <button
-              onClick={onOpenVoiceAssistant}
-              className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-indigo-200 bg-gradient-to-b from-indigo-50/80 to-white hover:border-indigo-400 shadow-2xs transition active:scale-95 text-center group"
+              type="button"
+              onClick={() => onOpenQuickRequest('task_update')}
+              className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border border-slate-200 bg-white hover:border-blue-300 transition active:scale-95 text-center group shadow-2xs"
             >
-              <div className="p-2.5 rounded-xl bg-indigo-600 text-white group-hover:scale-110 shadow-sm shadow-indigo-500/30 transition mb-2 relative">
-                <Mic className="w-5 h-5 animate-pulse" />
-                <span className="w-2 h-2 rounded-full bg-emerald-400 absolute top-1 right-1" />
+              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                <CheckSquare className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-slate-800">Voice Assistant</span>
-              <span className="text-[10px] text-indigo-600 font-medium mt-0.5">Speak & create plans</span>
+              <span className="text-[11px] font-bold text-slate-800 truncate w-full">{lang === 'km' ? 'កែប្រែកិច្ចការ' : 'Task Slider'}</span>
             </button>
-          )}
 
-          <button
-            onClick={() => onOpenQuickRequest('task_update')}
-            className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 text-center group"
-          >
-            <div className="p-2.5 rounded-xl bg-blue-100 text-blue-700 group-hover:scale-110 transition mb-2">
-              <CheckSquare className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold text-slate-800">Update Task</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Quick milestone slider</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => onOpenQuickRequest('leave_request')}
+              className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-300 transition active:scale-95 text-center group shadow-2xs"
+            >
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-800 truncate w-full">{lang === 'km' ? 'សុំច្បាប់' : 'Leave'}</span>
+            </button>
 
-          <button
-            onClick={() => onOpenQuickRequest('leave_request')}
-            className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/50 shadow-2xs transition active:scale-95 text-center group"
-          >
-            <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-700 group-hover:scale-110 transition mb-2">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold text-slate-800">Request Leave</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Half-day or full shift</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('departments')}
+              className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border border-blue-200/80 bg-white hover:border-blue-400 transition active:scale-95 text-center group shadow-2xs"
+            >
+              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                <Network className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-800 truncate w-full">{lang === 'km' ? 'មែកធាង' : 'Org Tree'}</span>
+            </button>
 
-          <button
-            onClick={() => onNavigateTab('departments')}
-            className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50/70 to-white hover:border-blue-400 shadow-2xs transition active:scale-95 text-center group"
-          >
-            <div className="p-2.5 rounded-xl bg-blue-100 text-blue-700 group-hover:scale-110 transition mb-2">
-              <Network className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold text-slate-800">{lang === 'km' ? 'មែកធាងអង្គភាព' : 'Org Treeview'}</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">{lang === 'km' ? 'ឋានានុក្រម និងអ្នកទទួលខុសត្រូវ' : 'Hierarchy & Who to ask'}</span>
-          </button>
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border border-slate-200 bg-white hover:border-purple-300 transition active:scale-95 text-center group shadow-2xs"
+            >
+              <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                <Search className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-800 truncate w-full">{lang === 'km' ? 'ស្វែងរក' : 'Search'}</span>
+            </button>
 
-          <button
-            onClick={onOpenSearch}
-            className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/50 shadow-2xs transition active:scale-95 text-center group"
-          >
-            <div className="p-2.5 rounded-xl bg-purple-100 text-purple-700 group-hover:scale-110 transition mb-2">
-              <Search className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold text-slate-800">Fast Search</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Press Ctrl + K</span>
-          </button>
-
-          <button
-            onClick={onOpenFeedback}
-            className="flex flex-col items-center justify-center p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-rose-300 hover:bg-rose-50/50 shadow-2xs transition active:scale-95 text-center group col-span-2 sm:col-span-1"
-          >
-            <div className="p-2.5 rounded-xl bg-rose-100 text-rose-700 group-hover:scale-110 transition mb-2">
-              <MessageSquare className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold text-slate-800">Give Feedback</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Rate app & submit ideas</span>
-          </button>
+            <button
+              type="button"
+              onClick={onOpenFeedback}
+              className="flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl border border-slate-200 bg-white hover:border-rose-300 transition active:scale-95 text-center group shadow-2xs"
+            >
+              <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                <MessageSquare className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-800 truncate w-full">{lang === 'km' ? 'មតិកែលម្អ' : 'Feedback'}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Notifications & Alerts Carousel / Banner (Strategy 6) */}
-      {unreadNotifs.length > 0 && (
-        <div className="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/80 shadow-2xs flex items-center justify-between">
-          <div className="flex items-center space-x-3 min-w-0">
-            <div className="p-2 rounded-xl bg-amber-200/80 text-amber-800 shrink-0">
-              <Bell className="w-4 h-4" />
+      {/* Notifications & Alerts Carousel / Banner - Compact */}
+      {(hubViewMode === 'all' || hubViewMode === 'tasks') && unreadNotifs.length > 0 && (
+        <div className="p-2.5 sm:p-3 rounded-xl border border-amber-200 bg-amber-50/80 shadow-2xs flex items-center justify-between text-xs">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="p-1.5 rounded-lg bg-amber-200/80 text-amber-800 shrink-0">
+              <Bell className="w-3.5 h-3.5" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold text-amber-900">
-                  {unreadNotifs.length} Unread Notification{unreadNotifs.length > 1 ? 's' : ''}
+              <div className="flex items-center space-x-1.5">
+                <span className="font-bold text-amber-900 truncate">
+                  {unreadNotifs.length} Unread Alert{unreadNotifs.length > 1 ? 's' : ''}
                 </span>
-                <span className="px-1.5 py-0.2 bg-amber-200 text-amber-900 rounded-md text-[10px] font-bold">
-                  Action required
+                <span className="px-1.5 py-0.2 bg-amber-200 text-amber-900 rounded text-[10px] font-bold">
+                  Action
                 </span>
               </div>
-              <p className="text-xs text-amber-800/80 truncate mt-0.5">
+              <p className="text-[11px] text-amber-800/80 truncate">
                 {unreadNotifs[0].title}: {unreadNotifs[0].message}
               </p>
             </div>
@@ -629,433 +673,386 @@ export const EmployeeHubView: React.FC<EmployeeHubViewProps> = ({
               setRefreshKey(k => k + 1);
               showToast('Marked all notifications as read');
             }}
-            className="px-2.5 py-1 text-xs font-bold text-amber-900 hover:bg-amber-200/60 rounded-lg transition shrink-0 ml-2"
+            className="px-2 py-1 text-[11px] font-bold text-amber-900 hover:bg-amber-200/60 rounded-md transition shrink-0 ml-2"
           >
-            Dismiss All
+            Dismiss
           </button>
         </div>
       )}
 
-      {/* Focus Tasks Today with Progressive Disclosure (Strategy 2, 5) */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
-              <CheckSquare className="w-5 h-5" />
+      {/* Focus Tasks Today with Progressive Disclosure - Compact Mobile Design */}
+      {(hubViewMode === 'all' || hubViewMode === 'tasks') && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="p-3 sm:p-3.5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 rounded-lg bg-blue-50 text-blue-700">
+                <CheckSquare className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                  {lang === 'km' ? 'កិច្ចការផ្ដោតអារម្មណ៍' : 'My Assigned Focus Tasks'} ({activeTasks.length})
+                </h3>
+                <p className="text-[11px] text-slate-500">Tap to expand details, update progress or sliders</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">My Assigned Focus Tasks ({activeTasks.length})</h3>
-              <p className="text-xs text-slate-500">Tap to expand full details, update progress, or view action plan</p>
-            </div>
+            <button
+              onClick={() => onNavigateTab('activities')}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-0.5"
+            >
+              <span>View All</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <button
-            onClick={() => onNavigateTab('activities')}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1"
-          >
-            <span>View All</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
 
-        <div className="divide-y divide-slate-100">
-          {activeTasks.length === 0 ? (
-            <div className="py-12 text-center text-slate-400">
-              <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-400" />
-              <p className="text-xs font-bold text-slate-700">All tasks completed!</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">You have no pending activities assigned to your profile today.</p>
-            </div>
-          ) : (
-            activeTasks.map(task => {
-              const isExpanded = expandedTaskId === task.id;
-              return (
-                <div key={task.id} className="p-4 transition hover:bg-slate-50/60">
-                  <div 
-                    onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
-                    className="flex items-start justify-between cursor-pointer select-none gap-3"
-                  >
-                    <div className="flex items-start space-x-3 min-w-0 pr-2">
-                      {/* 1-Click Task Complete Checkbox */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleTaskComplete(task);
-                        }}
-                        className={`w-6 h-6 rounded-lg border flex items-center justify-center transition shrink-0 mt-0.5 ${
-                          task.status === 'Completed' || task.progressPercentage === 100
-                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                            : 'border-slate-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 text-transparent hover:text-emerald-500'
-                        }`}
-                        title={task.status === 'Completed' ? 'Mark In Progress' : 'Quick Complete (100%)'}
-                      >
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      </button>
+          <div className="divide-y divide-slate-100">
+            {activeTasks.length === 0 ? (
+              <div className="py-8 text-center text-slate-400">
+                <CheckCircle2 className="w-8 h-8 mx-auto mb-1.5 text-emerald-500" />
+                <p className="text-xs font-bold text-slate-700">All tasks completed!</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">No pending activities assigned to your profile today.</p>
+              </div>
+            ) : (
+              activeTasks.map(task => {
+                const isExpanded = expandedTaskId === task.id;
+                return (
+                  <div key={task.id} className="p-2.5 sm:p-3 transition hover:bg-slate-50/60">
+                    <div 
+                      onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                      className="flex items-start justify-between cursor-pointer select-none gap-2.5"
+                    >
+                      <div className="flex items-start space-x-2.5 min-w-0 pr-1">
+                        {/* 1-Click Task Complete Checkbox */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleTaskComplete(task);
+                          }}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition shrink-0 mt-0.5 ${
+                            task.status === 'Completed' || task.progressPercentage === 100
+                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                              : 'border-slate-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 text-transparent hover:text-emerald-500'
+                          }`}
+                          title={task.status === 'Completed' ? 'Mark In Progress' : 'Quick Complete (100%)'}
+                        >
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </button>
 
-                      <div className="min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
-                            {task.code}
-                          </span>
-                          <h4 className={`text-xs sm:text-sm font-bold truncate ${
-                            task.status === 'Completed' ? 'line-through text-slate-400' : 'text-slate-900'
-                          }`}>
-                            {task.title}
-                          </h4>
-                        </div>
-                        <div className="flex items-center space-x-3 text-xs text-slate-500 mt-1">
-                          <span>Due: <strong className="text-slate-700">{task.dueDate}</strong></span>
-                          <span>•</span>
-                          <span>Weight: <strong className="text-slate-700">{task.weight}%</strong></span>
-                          <span>•</span>
-                          <span>Status: <strong className={task.status === 'Completed' ? 'text-emerald-600 font-semibold' : 'text-blue-600'}>{task.status}</strong></span>
-                        </div>
-                        {task.lastAdjustmentReason && (
-                          <div className="mt-1">
-                            <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded font-medium">
-                              Adjustment: {task.lastAdjustmentReason}
+                        <div className="min-w-0">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="font-mono text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded">
+                              {task.code}
+                            </span>
+                            <h4 className={`text-xs sm:text-sm font-bold truncate ${
+                              task.status === 'Completed' ? 'line-through text-slate-400' : 'text-slate-900'
+                            }`}>
+                              {task.title}
+                            </h4>
+                          </div>
+                          <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
+                            <span>Due: <strong className="text-slate-700">{task.dueDate}</strong></span>
+                            <span>•</span>
+                            <span>Weight: <strong className="text-slate-700">{task.weight}%</strong></span>
+                            <span>•</span>
+                            <span className={task.status === 'Completed' ? 'text-emerald-600 font-semibold' : 'text-blue-600 font-medium'}>
+                              {task.status}
                             </span>
                           </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <div className="text-right">
+                          <span className="text-xs font-black text-slate-900 font-mono">{task.progressPercentage}%</span>
+                          <div className="w-14 h-1.5 bg-slate-100 rounded-full overflow-hidden mt-0.5">
+                            <div 
+                              className="h-full bg-blue-600 rounded-full" 
+                              style={{ width: `${task.progressPercentage}%` }}
+                            />
+                          </div>
+                        </div>
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                      </div>
+                    </div>
+
+                    {/* Progressive Disclosure (Shown on demand) */}
+                    {isExpanded && (
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 text-xs space-y-2 animate-in fade-in duration-150">
+                        {task.description && (
+                          <p className="text-slate-600 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px]">
+                            {task.description}
+                          </p>
                         )}
-                      </div>
-                    </div>
 
-                    <div className="flex items-center space-x-3 shrink-0">
-                      <div className="text-right">
-                        <span className="text-xs font-black text-slate-900 font-mono">{task.progressPercentage}%</span>
-                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden mt-1">
-                          <div 
-                            className="h-full bg-blue-600 rounded-full" 
-                            style={{ width: `${task.progressPercentage}%` }}
-                          />
+                        {/* Quick progress increment buttons */}
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-[10px] font-bold text-slate-600">Update:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {[25, 50, 75, 100].map(val => (
+                              <button
+                                key={val}
+                                onClick={() => handleQuickProgressUpdate(task.id, val)}
+                                className={`px-2 py-1 rounded text-[11px] font-bold transition ${
+                                  task.progressPercentage === val
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                }`}
+                              >
+                                {val === 100 ? '✓ 100%' : `${val}%`}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                    </div>
-                  </div>
 
-                  {/* Progressive Disclosure (Shown only on demand) */}
-                  {isExpanded && (
-                    <div className="mt-3 pt-3 border-t border-slate-100 text-xs space-y-3 animate-in fade-in duration-150">
-                      {task.description && (
-                        <p className="text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                          {task.description}
-                        </p>
-                      )}
-
-                      {/* Quick progress increment buttons */}
-                      <div>
-                        <span className="text-[11px] font-bold text-slate-700 block mb-1.5">
-                          Quick Progress Update:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {[25, 50, 75, 100].map(val => (
-                            <button
-                              key={val}
-                              onClick={() => handleQuickProgressUpdate(task.id, val)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                                task.progressPercentage === val
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                              }`}
-                            >
-                              {val === 100 ? '✓ 100% (Complete)' : `${val}%`}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-between pt-1 gap-2">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center justify-between pt-1 gap-2 text-[11px]">
                           <button
                             onClick={() => onNavigatePlan(task.actionPlanId)}
                             className="flex items-center space-x-1 text-blue-600 hover:underline font-semibold"
                           >
-                            <span>Open Associated Action Plan</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Open Plan</span>
+                            <ExternalLink className="w-3 h-3" />
                           </button>
                           <button
                             onClick={() => setScheduleActivity(task)}
-                            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-[11px] border border-indigo-200 transition"
+                            className="flex items-center space-x-1 px-2 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200"
                           >
                             <Clock className="w-3 h-3" />
-                            <span>Adjust Deadline & Priority</span>
+                            <span>Schedule & Priority</span>
                           </button>
                         </div>
-                        <span className="text-[11px] text-slate-400">
-                          Assigned by: {task.teamLeaderId ? 'Team Lead' : 'Department'}
-                        </span>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* My Owned Action Plans (Employee Self-Service) */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
-              <FolderKanban className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-bold text-slate-900">
-                  {lang === 'km' ? 'ផែនការសកម្មភាពផ្ទាល់ខ្លួន' : 'My Owned Action Plans'} ({myOwnedPlans.length})
-                </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                  {lang === 'km' ? 'សិទ្ធិម្ចាស់ពេញលេញ' : 'Full Ownership'}
-                </span>
+      {(hubViewMode === 'all' || hubViewMode === 'plans') && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="p-3 sm:p-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+                <FolderKanban className="w-4 h-4" />
               </div>
-              <p className="text-xs text-slate-500">
-                {lang === 'km' 
-                  ? 'ក្នុងនាមជាបុគ្គលិក អ្នកអាចបង្កើត កែប្រែ និងលុប/ទុកក្នុងបណ្ណសារនូវផែនការដែលអ្នកជាម្ចាស់'
-                  : 'Create, lead, edit, and archive your personal strategic initiatives'}
-              </p>
+              <div>
+                <div className="flex items-center space-x-1.5">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                    {lang === 'km' ? 'ផែនការសកម្មភាពផ្ទាល់ខ្លួន' : 'My Owned Action Plans'} ({myOwnedPlans.length})
+                  </h3>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    Owner
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  {lang === 'km' ? 'គ្រប់គ្រង និងបញ្ចប់ផែនការសកម្មភាពផ្ទាល់ខ្លួន' : 'Manage & complete your initiatives'}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => {
-                if (onOpenCreatePlan) {
-                  onOpenCreatePlan();
-                } else {
-                  onNavigateTab('action-plans');
-                }
-              }}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{lang === 'km' ? 'បង្កើតផែនការថ្មី' : 'Create Plan'}</span>
-            </button>
-            <button
-              onClick={() => onNavigateTab('action-plans')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1 px-2 py-1.5"
-            >
-              <span>{lang === 'km' ? 'មើលកាតាឡុក' : 'View Catalog'}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-5">
-          {myOwnedPlans.length === 0 ? (
-            <div className="py-8 px-4 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-              <FolderKanban className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-              <p className="text-xs font-bold text-slate-700">
-                {lang === 'km' ? 'មិនទាន់មានផែនការផ្ទាល់ខ្លួននៅឡើយទេ' : 'No owned action plans yet'}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-1 max-w-md mx-auto">
-                {lang === 'km'
-                  ? 'អ្នកមានសិទ្ធិបង្កើតផែនការសកម្មភាពថ្មី គ្រប់គ្រងកាលវិភាគ ថវិកា និងសូចនាករ KPI ដោយផ្ទាល់។'
-                  : 'You have full permissions to propose and lead strategic action plans. Create your first initiative today.'}
-              </p>
+            <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => {
                   if (onOpenCreatePlan) onOpenCreatePlan();
                   else onNavigateTab('action-plans');
                 }}
-                className="mt-3.5 inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>{lang === 'km' ? 'បង្កើតផែនការដំបូងរបស់អ្នក' : 'Create Your First Plan'}</span>
+                <span>{lang === 'km' ? 'ផែនការថ្មី' : 'New Plan'}</span>
+              </button>
+              <button
+                onClick={() => onNavigateTab('action-plans')}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-0.5 px-1.5 py-1"
+              >
+                <span>Catalog</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {myOwnedPlans.map(plan => {
-                const isOverdue = plan.dueDate < todayStr && plan.status !== 'Completed';
-                return (
-                  <div
-                    key={plan.id}
-                    className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-xs bg-white transition flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[11px] border border-blue-200">
-                            {plan.planNumber}
-                          </span>
-                          <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <UserCheck className="w-3 h-3" />
-                            <span>{lang === 'km' ? 'ម្ចាស់' : 'Owner'}</span>
-                          </span>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          plan.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
-                          plan.status === 'In Progress' ? 'bg-indigo-100 text-indigo-800' :
-                          plan.status === 'Draft' ? 'bg-slate-100 text-slate-700' :
-                          'bg-amber-100 text-amber-800'
-                        }`}>
-                          {plan.status}
-                        </span>
-                      </div>
+          </div>
 
-                      <h4 
-                        onClick={() => onNavigatePlan(plan.id)}
-                        className="font-bold text-xs text-slate-900 mt-2 hover:text-blue-600 cursor-pointer line-clamp-1"
-                        title={plan.title}
-                      >
-                        {plan.title}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                        {plan.description || (lang === 'km' ? 'គ្មានការពិពណ៌នា' : 'No description')}
-                      </p>
-
-                      {/* Progress Bar */}
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                          <span>{lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress'}</span>
-                          <span className="font-bold text-slate-800">{plan.completionPercentage}%</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
-                            style={{ width: `${plan.completionPercentage}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* KPI & Due Date */}
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 mt-2.5 pt-2 border-t border-slate-100">
-                        <span className={isOverdue ? 'text-rose-600 font-bold' : ''}>
-                          {lang === 'km' ? 'ផុតកំណត់៖' : 'Due:'} {plan.dueDate}
-                        </span>
-                        {plan.kpi ? (
-                          <span className="font-medium text-slate-700 truncate max-w-[150px]">
-                            KPI: {plan.kpiActual}/{plan.kpiTarget} {plan.kpiUnit}
-                          </span>
-                        ) : (
-                          <span>Priority: {plan.priority}</span>
-                        )}
-                      </div>
-
-                      {/* Alignment Status & Collaboration Badge */}
-                      {plan.alignmentStatus && (
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <span className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                            plan.alignmentStatus === 'Fully Aligned' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                            plan.alignmentStatus === 'Review Needed' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                            'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}>
-                            <Target className="w-2.5 h-2.5" />
-                            <span>{plan.alignmentStatus}</span>
-                          </span>
-                          {plan.nextReviewDate && (
-                            <span className="text-[10px] text-slate-400">
-                              {lang === 'km' ? 'ត្រួតពិនិត្យ៖' : 'Review:'} {plan.nextReviewDate}
+          <div className="p-3 sm:p-3.5">
+            {myOwnedPlans.length === 0 ? (
+              <div className="py-6 px-3 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+                <FolderKanban className="w-8 h-8 mx-auto mb-1 text-slate-300" />
+                <p className="text-xs font-bold text-slate-700">
+                  {lang === 'km' ? 'មិនទាន់មានផែនការផ្ទាល់ខ្លួននៅឡើយទេ' : 'No owned action plans yet'}
+                </p>
+                <button
+                  onClick={() => {
+                    if (onOpenCreatePlan) onOpenCreatePlan();
+                    else onNavigateTab('action-plans');
+                  }}
+                  className="mt-2 inline-flex items-center space-x-1 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{lang === 'km' ? 'បង្កើតផែនការដំបូង' : 'Create First Plan'}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {myOwnedPlans.map(plan => {
+                  const isOverdue = plan.dueDate < todayStr && plan.status !== 'Completed';
+                  return (
+                    <div
+                      key={plan.id}
+                      className="p-3 rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-xs bg-white transition flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded text-[10px] border border-blue-200">
+                              {plan.planNumber}
                             </span>
-                          )}
+                            <span className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <UserCheck className="w-2.5 h-2.5" />
+                              <span>Owner</span>
+                            </span>
+                          </div>
+                          <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                            plan.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+                            plan.status === 'In Progress' ? 'bg-indigo-100 text-indigo-800' :
+                            'bg-slate-100 text-slate-700'
+                          }`}>
+                            {plan.status}
+                          </span>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-wrap items-center justify-between mt-3 pt-2 border-t border-slate-100 gap-2">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {plan.status !== 'Completed' ? (
+                        <h4 
+                          onClick={() => onNavigatePlan(plan.id)}
+                          className="font-bold text-xs text-slate-900 mt-1.5 hover:text-blue-600 cursor-pointer line-clamp-1"
+                          title={plan.title}
+                        >
+                          {plan.title}
+                        </h4>
+
+                        {/* Progress Bar */}
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 mb-0.5">
+                            <span>{lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress'}</span>
+                            <span className="font-bold text-slate-800">{plan.completionPercentage}%</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                              style={{ width: `${plan.completionPercentage}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Due Date & KPI */}
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1.5 pt-1.5 border-t border-slate-100">
+                          <span className={isOverdue ? 'text-rose-600 font-bold' : ''}>
+                            Due: {plan.dueDate}
+                          </span>
+                          <span className="truncate max-w-[140px]">
+                            {plan.kpi ? `KPI: ${plan.kpiActual}/${plan.kpiTarget}` : `Priority: ${plan.priority}`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 gap-1.5">
+                        <div className="flex items-center space-x-1">
+                          {plan.status !== 'Completed' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickCompletePlan(plan.id)}
+                              className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold border border-emerald-200 transition"
+                            >
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              <span>100%</span>
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-bold text-emerald-700">Done</span>
+                          )}
+
                           <button
                             type="button"
-                            onClick={() => handleQuickCompletePlan(plan.id)}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition"
-                            title={lang === 'km' ? 'សម្គាល់ថាបានបញ្ចប់ ១០០%' : 'Quick complete action plan in 1 click'}
+                            onClick={() => setCollaborationPlan(plan)}
+                            className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-semibold border border-indigo-200 transition"
                           >
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
-                            <span>{lang === 'km' ? 'បញ្ចប់ ១០០%' : 'Quick Complete'}</span>
+                            <UsersIcon className="w-2.5 h-2.5" />
+                            <span>Collab</span>
                           </button>
-                        ) : (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                            <Check className="w-3 h-3 stroke-[3]" />
-                            <span>{lang === 'km' ? 'បានបញ្ចប់' : 'Completed'}</span>
-                          </span>
-                        )}
 
-                        {/* Collaborate button */}
-                        <button
-                          type="button"
-                          onClick={() => setCollaborationPlan(plan)}
-                          className="inline-flex items-center space-x-1 px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-semibold border border-indigo-200 transition"
-                          title={lang === 'km' ? 'ចែករំលែកដើម្បីសហការ និងមតិកែលម្អ' : 'Share for collaboration and feedback'}
-                        >
-                          <UsersIcon className="w-3 h-3" />
-                          <span>{lang === 'km' ? 'សហការ' : 'Collaborate'}</span>
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => setGoalReviewPlan(plan)}
+                            className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-semibold border border-blue-200 transition"
+                          >
+                            <Target className="w-2.5 h-2.5" />
+                            <span>Goal</span>
+                          </button>
+                        </div>
 
-                        {/* Goal Review button */}
-                        <button
-                          type="button"
-                          onClick={() => setGoalReviewPlan(plan)}
-                          className="inline-flex items-center space-x-1 px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold border border-blue-200 transition"
-                          title={lang === 'km' ? 'ត្រួតពិនិត្យការតម្រឹមគោលដៅទៀងទាត់' : 'Periodic goal alignment review'}
-                        >
-                          <Target className="w-3 h-3" />
-                          <span>{lang === 'km' ? 'ត្រួតពិនិត្យគោលដៅ' : 'Review'}</span>
-                        </button>
-
-                        <button
-                          onClick={() => onNavigatePlan(plan.id)}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center space-x-1 px-1.5 py-1"
-                        >
-                          <span>{lang === 'km' ? 'បើក និងគ្រប់គ្រង' : 'Open'}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => onNavigatePlan(plan.id)}
+                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800"
+                          >
+                            Open
+                          </button>
+                          <button
+                            onClick={e => handleDeleteOwnedPlan(plan, e)}
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-600 transition"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={e => handleDeleteOwnedPlan(plan, e)}
-                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                        title={lang === 'km' ? 'ទុកក្នុងបណ្ណសារ / លុប' : 'Archive / Delete'}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Performance Summary Bar - Compact 4-Card Strip */}
+      {hubViewMode === 'all' && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Attendance Rate</span>
+            <div className="flex items-baseline space-x-1 mt-0.5">
+              <span className="text-base sm:text-lg font-black text-slate-900">96.5%</span>
+              <span className="text-[10px] font-semibold text-emerald-600">Punctual</span>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Performance Summary Bar (Strategy 10) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Attendance Rate</span>
-          <div className="flex items-baseline space-x-1.5 mt-1">
-            <span className="text-xl font-black text-slate-900">96.5%</span>
-            <span className="text-[10px] font-semibold text-emerald-600">Punctual</span>
+          <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Tasks</span>
+            <div className="flex items-baseline space-x-1 mt-0.5">
+              <span className="text-base sm:text-lg font-black text-slate-900">{myActivities.length}</span>
+              <span className="text-[10px] font-semibold text-blue-600">{completedTasks.length} Done</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Monthly OT</span>
+            <div className="flex items-baseline space-x-1 mt-0.5">
+              <span className="text-base sm:text-lg font-black text-slate-900">2.5h</span>
+              <span className="text-[10px] font-semibold text-indigo-600">Logged</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Quick Guide</span>
+            <button
+              type="button"
+              onClick={onOpenHelp}
+              className="flex items-center space-x-1 mt-0.5 text-xs font-bold text-cyan-700 hover:text-cyan-800"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Tutorial</span>
+            </button>
           </div>
         </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Tasks</span>
-          <div className="flex items-baseline space-x-1.5 mt-1">
-            <span className="text-xl font-black text-slate-900">{myActivities.length}</span>
-            <span className="text-[10px] font-semibold text-blue-600">{completedTasks.length} Done</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Monthly OT Hours</span>
-          <div className="flex items-baseline space-x-1.5 mt-1">
-            <span className="text-xl font-black text-slate-900">2.5h</span>
-            <span className="text-[10px] font-semibold text-indigo-600">Logged</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quick Help</span>
-          <button
-            onClick={onOpenHelp}
-            className="flex items-center space-x-1 mt-1 text-xs font-bold text-cyan-700 hover:text-cyan-800"
-          >
-            <HelpCircle className="w-4 h-4" />
-            <span>Open Tutorial</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Edit Shift Modal */}
       <EditAttendanceShiftModal

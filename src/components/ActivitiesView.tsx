@@ -258,14 +258,14 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5 sm:space-y-3.5 max-w-7xl mx-auto">
       {/* Header and Controls */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
             {t.activities} {lang === 'km' ? '& កិច្ចការ' : '& Tasks'}
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             {lang === 'km'
               ? 'ការអនុវត្តកិច្ចការលម្អិត ការគណនាទម្ងន់ផែនការ និងការផ្ទៀងផ្ទាត់ភាពអាស្រ័យនៃកិច្ចការ។'
               : 'Granular task execution, weighted plan calculations, and dependency validation.'}
@@ -275,50 +275,50 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
         {db.canCreatePlan(currentUser) && (
           <button
             onClick={handleOpenCreate}
-            className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition self-start md:self-auto"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition self-start md:self-auto active:scale-95"
           >
-            <Plus className="w-4 h-4" />
-            <span>{lang === 'km' ? 'បន្ថែមសកម្មភាពថ្មី' : 'Add New Activity'}</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>{lang === 'km' ? 'បន្ថែមសកម្មភាព' : 'New Activity'}</span>
           </button>
         )}
       </div>
 
       {/* View Mode Switcher: Table View vs WBS Plan & Task Treeview */}
-      <div className="flex items-center justify-between bg-white p-2 rounded-xl border border-slate-200 shadow-xs">
-        <div className="flex items-center space-x-1.5">
+      <div className="flex items-center justify-between bg-white p-1.5 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="flex items-center space-x-1">
           <button
             onClick={() => setViewMode('table')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               viewMode === 'table'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <Table className="w-3.5 h-3.5" />
-            <span>{lang === 'km' ? 'តារាងកិច្ចការ (Table View)' : 'Tasks Table'}</span>
+            <span>{lang === 'km' ? 'តារាងកិច្ចការ' : 'Tasks'}</span>
           </button>
 
           <button
             onClick={() => setViewMode('wbs')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               viewMode === 'wbs'
                 ? 'bg-purple-800 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <ListTree className="w-3.5 h-3.5" />
-            <span>{lang === 'km' ? 'មែកធាងឋានានុក្រម Tree (Plan & Task)' : 'Hierarchical Tree Table'}</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+            <span>{lang === 'km' ? 'មែកធាង Tree' : 'Tree Grid'}</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
               viewMode === 'wbs' ? 'bg-amber-300 text-amber-950' : 'bg-purple-100 text-purple-800'
             }`}>
-              Tree Grid
+              WBS
             </span>
           </button>
         </div>
 
         {viewMode === 'table' && (
           <div className="text-[11px] text-slate-500 font-medium hidden sm:block pr-2">
-            {filteredActivities.length} {lang === 'km' ? 'កិច្ចការសរុប' : 'Total Activities'}
+            {filteredActivities.length} {lang === 'km' ? 'កិច្ចការ' : 'Activities'}
           </div>
         )}
       </div>
@@ -331,17 +331,17 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
         />
       ) : (
         <>
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[240px]">
+      {/* Filters - Compact */}
+      <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[200px]">
           <div className="relative w-full max-w-xs">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder={lang === 'km' ? 'ស្វែងរកកូដកិច្ចការ ចំណងជើង...' : 'Search task code, title...'}
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              placeholder={lang === 'km' ? 'ស្វែងរកកូដកិច្ចការ...' : 'Search task code, title...'}
+              className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg border border-slate-200 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
             />
           </div>
 
@@ -349,25 +349,25 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs">
             <button
               onClick={() => setEmployeeFilter('all')}
-              className={`px-2.5 py-1 rounded-md font-semibold transition ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition ${
                 employeeFilter === 'all'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {lang === 'km' ? 'ទាំងអស់' : 'All Tasks'} ({activities.length})
+              {lang === 'km' ? 'ទាំងអស់' : 'All'} ({activities.length})
             </button>
             <button
               onClick={() => setEmployeeFilter(currentUser.id)}
-              className={`px-2.5 py-1 rounded-md font-semibold transition flex items-center space-x-1 ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition flex items-center space-x-1 ${
                 employeeFilter === currentUser.id
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>{lang === 'km' ? 'កិច្ចការរបស់ខ្ញុំ' : 'My Assigned'}</span>
-              <span className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] ${
+              <UserCheck className="w-3 h-3" />
+              <span>{lang === 'km' ? 'របស់ខ្ញុំ' : 'My Tasks'}</span>
+              <span className={`ml-0.5 px-1 py-0.2 rounded-full text-[9px] ${
                 employeeFilter === currentUser.id ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'
               }`}>
                 {activities.filter(a => a.assignedEmployeeId === currentUser.id).length}
@@ -376,14 +376,14 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {/* Plan filter */}
           <select
             value={planFilter}
             onChange={e => setPlanFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden max-w-[200px]"
+            className="px-2 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden max-w-[170px]"
           >
-            <option value="all">{lang === 'km' ? 'គ្រប់ផែនការសកម្មភាព' : 'All Action Plans'}</option>
+            <option value="all">{lang === 'km' ? 'គ្រប់ផែនការ' : 'All Plans'}</option>
             {plans.map(p => (
               <option key={p.id} value={p.id}>{p.planNumber}: {p.title}</option>
             ))}
@@ -393,9 +393,9 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
           <select
             value={employeeFilter}
             onChange={e => setEmployeeFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden"
+            className="px-2 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden max-w-[150px]"
           >
-            <option value="all">{lang === 'km' ? 'គ្រប់បុគ្គលិកដែលបានចាត់តាំង' : 'All Assigned Employees'}</option>
+            <option value="all">{lang === 'km' ? 'គ្រប់បុគ្គលិក' : 'All Assignees'}</option>
             {users.map(u => (
               <option key={u.id} value={u.id}>{u.name}</option>
             ))}
@@ -405,9 +405,9 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden"
+            className="px-2 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-hidden"
           >
-            <option value="all">{lang === 'km' ? 'គ្រប់ស្ថានភាព' : 'All Statuses'}</option>
+            <option value="all">{lang === 'km' ? 'គ្រប់ស្ថានភាព' : 'All Status'}</option>
             <option value="Not Started">{t.notStarted}</option>
             <option value="In Progress">{t.inProgress}</option>
             <option value="Under Review">{lang === 'km' ? 'កំពុងត្រួតពិនិត្យ' : 'Under Review'}</option>
@@ -420,25 +420,25 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
 
       {/* Direct Responsibility & Priority Management Banner */}
       {employeeFilter === currentUser.id && (
-        <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white p-4 rounded-xl shadow-xs border border-blue-900/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-          <div className="space-y-1 max-w-2xl">
-            <div className="flex items-center space-x-2">
-              <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-400/30 text-[10px]">
-                {lang === 'km' ? 'ការគ្រប់គ្រងភារកិច្ចផ្ទាល់ខ្លួន' : 'Personal Task Responsibilities'}
+        <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white p-2.5 sm:p-3 rounded-xl shadow-2xs border border-blue-900/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+          <div className="space-y-0.5 max-w-2xl">
+            <div className="flex items-center space-x-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-400/30 text-[9px]">
+                {lang === 'km' ? 'ភារកិច្ចផ្ទាល់ខ្លួន' : 'My Responsibilities'}
               </span>
-              <span className="text-slate-300 font-semibold">
-                {lang === 'km' ? 'ការកំណត់អាទិភាព និងការកែសម្រួលកាលបរិច្ឆេទ' : 'Prioritization & Deadline Adjustments'}
+              <span className="text-slate-300 font-semibold text-[11px]">
+                {lang === 'km' ? 'ការកំណត់អាទិភាព និងកាលបរិច្ឆេទ' : 'Prioritization & Deadlines'}
               </span>
             </div>
-            <p className="text-slate-300 text-[11px] leading-relaxed">
+            <p className="text-slate-300 text-[10px] leading-relaxed line-clamp-1">
               {lang === 'km'
-                ? 'តាមរយៈការចូលប្រើប្រាស់ដោយផ្ទាល់ បុគ្គលិកអាចកំណត់អាទិភាពកិច្ចការប្រកបដោយប្រសិទ្ធភាព និងធ្វើការកែសម្រួលចាំបាច់ដើម្បីឆ្លើយតបនឹងកាលកំណត់។'
-                : 'By having direct access, employees can prioritize their tasks effectively and make necessary adjustments to meet deadlines smoothly.'}
+                ? 'បុគ្គលិកអាចកំណត់អាទិភាពកិច្ចការប្រកបដោយប្រសិទ្ធភាព និងធ្វើការកែសម្រួលដើម្បីឆ្លើយតបនឹងកាលកំណត់។'
+                : 'Prioritize tasks and update deliverables to meet target deadlines smoothly.'}
             </p>
           </div>
-          <div className="shrink-0 flex items-center space-x-2">
-            <span className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 font-mono text-[11px] border border-white/15">
-              {activities.filter(a => a.assignedEmployeeId === currentUser.id && a.status === 'Completed').length} / {activities.filter(a => a.assignedEmployeeId === currentUser.id).length} {lang === 'km' ? 'បានបញ្ចប់' : 'Completed'}
+          <div className="shrink-0 flex items-center space-x-1.5">
+            <span className="px-2 py-0.5 rounded-lg bg-white/10 text-slate-200 font-mono text-[10px] border border-white/15">
+              {activities.filter(a => a.assignedEmployeeId === currentUser.id && a.status === 'Completed').length} / {activities.filter(a => a.assignedEmployeeId === currentUser.id).length} {lang === 'km' ? 'រួច' : 'Done'}
             </span>
           </div>
         </div>
@@ -447,20 +447,20 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
       {/* Dependency Warning Modal */}
       {dependencyWarning && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-5 border border-slate-200 animate-in fade-in zoom-in-95">
-            <div className="flex items-center space-x-3 text-rose-600 mb-3">
-              <ShieldAlert className="w-6 h-6 shrink-0" />
-              <h3 className="text-sm font-bold text-slate-900">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-4 border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="flex items-center space-x-2 text-rose-600 mb-2">
+              <ShieldAlert className="w-5 h-5 shrink-0" />
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                 {lang === 'km' ? 'បំពានវិធានភាពអាស្រ័យនៃកិច្ចការ' : 'Task Dependency Rule Violated'}
               </h3>
             </div>
-            <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed mb-4">
+            <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed mb-3">
               {dependencyWarning}
             </p>
             <div className="flex justify-end">
               <button
                 onClick={() => setDependencyWarning(null)}
-                className="px-4 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-semibold hover:bg-slate-900"
+                className="px-3 py-1 rounded-lg bg-slate-800 text-white text-xs font-semibold hover:bg-slate-900"
               >
                 {lang === 'km' ? 'យល់ព្រម' : 'Understood'}
               </button>
@@ -469,21 +469,131 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Activities Display: Mobile Card List (sm:hidden) & Desktop Table (hidden sm:block) */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+        {/* Mobile View: Cards */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {filteredActivities.length === 0 ? (
+            <div className="py-8 text-center text-slate-400">
+              <CheckCircle className="w-7 h-7 mx-auto mb-1 text-slate-300" />
+              <p className="text-xs font-medium">No activities found</p>
+            </div>
+          ) : (
+            filteredActivities.map(act => {
+              const plan = plans.find(p => p.id === act.actionPlanId);
+              const isCompleted = act.status === 'Completed';
+
+              return (
+                <div key={act.id} className="p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start space-x-2 min-w-0">
+                      <button
+                        onClick={() => handleToggleStatus(act)}
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition ${
+                          isCompleted 
+                            ? 'bg-emerald-600 border-emerald-600 text-white' 
+                            : 'border-slate-300 hover:border-blue-500 bg-white'
+                        }`}
+                      >
+                        {isCompleted && <CheckCircle className="w-3 h-3" />}
+                      </button>
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-1.5 flex-wrap">
+                          <span className="font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded text-[10px]">
+                            {act.code}
+                          </span>
+                          <span className={`font-semibold text-xs text-slate-900 ${isCompleted ? 'line-through text-slate-400' : ''}`}>
+                            {act.title}
+                          </span>
+                        </div>
+                        {act.deliverableOutput && (
+                          <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                            {act.deliverableOutput}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <span className={`px-2 py-0.2 rounded-full text-[10px] font-bold shrink-0 ${statusColors[act.status]}`}>
+                      {getStatusLabel(act.status)}
+                    </span>
+                  </div>
+
+                  {/* Progress & Meta Bar */}
+                  <div className="bg-slate-50/80 p-2 rounded-lg space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-slate-600">
+                      <span className="truncate max-w-[160px] font-medium">{plan?.planNumber}</span>
+                      <span className="font-mono text-slate-800 font-bold">{act.progressPercentage}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                        style={{ width: `${act.progressPercentage}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                      <span>Due: {act.dueDate}</span>
+                      <span>Weight: {act.weightPercentage}%</span>
+                    </div>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="flex items-center justify-between pt-0.5">
+                    <button
+                      onClick={() => setProgressActivity(act)}
+                      className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200 active:scale-95"
+                    >
+                      <TrendingUp className="w-3 h-3" />
+                      <span>Update</span>
+                    </button>
+
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => setScheduleActivity(act)}
+                        className="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-slate-100"
+                        title="Schedule"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenEdit(act)}
+                        className="p-1 rounded text-slate-500 hover:text-blue-600 hover:bg-slate-100"
+                        title="Edit"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(act, e);
+                        }}
+                        className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Dense Clean Table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                <th className="py-3 px-4 w-12 text-center">{lang === 'km' ? 'រួចរាល់' : 'Done'}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'កូដ និងចំណងជើងសកម្មភាព' : 'Activity Code & Title'}</th>
-                <th className="py-3 px-4">{t.actionPlans}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'អ្នកទទួលបន្ទុក និងប្រធានក្រុម' : 'Assignee & Leader'}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'ទម្ងន់' : 'Weight'}</th>
-                <th className="py-3 px-4">{t.dueDate}</th>
-                <th className="py-3 px-4">{lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress'}</th>
-                <th className="py-3 px-4">{t.status}</th>
-                <th className="py-3 px-4 text-right">{lang === 'km' ? 'សកម្មភាព' : 'Actions'}</th>
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                <th className="py-2.5 px-3 w-10 text-center">{lang === 'km' ? 'រួច' : 'Done'}</th>
+                <th className="py-2.5 px-3">{lang === 'km' ? 'កូដ និងចំណងជើងសកម្មភាព' : 'Activity Code & Title'}</th>
+                <th className="py-2.5 px-3">{t.actionPlans}</th>
+                <th className="py-2.5 px-3">{lang === 'km' ? 'អ្នកទទួលបន្ទុក' : 'Assignee'}</th>
+                <th className="py-2.5 px-2 text-center">{lang === 'km' ? 'ទម្ងន់' : 'Weight'}</th>
+                <th className="py-2.5 px-2.5">{t.dueDate}</th>
+                <th className="py-2.5 px-3">{lang === 'km' ? 'វឌ្ឍនភាព' : 'Progress'}</th>
+                <th className="py-2.5 px-2.5">{t.status}</th>
+                <th className="py-2.5 px-3 text-right">{lang === 'km' ? 'សកម្មភាព' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -503,130 +613,122 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
                   return (
                     <tr key={act.id} className="hover:bg-slate-50/80 transition">
                       {/* Done Checkbox */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-2 px-3 text-center">
                         <button
                           onClick={() => handleToggleStatus(act)}
-                          className={`w-5 h-5 rounded border flex items-center justify-center transition ${
+                          className={`w-4 h-4 rounded border flex items-center justify-center transition mx-auto ${
                             isCompleted 
                               ? 'bg-emerald-600 border-emerald-600 text-white' 
                               : 'border-slate-300 hover:border-blue-500 bg-white'
                           }`}
                           title={isCompleted ? (lang === 'km' ? 'សម្គាល់ថាកំពុងដំណើរការ' : 'Mark In Progress') : (lang === 'km' ? 'សម្គាល់ថាបានបញ្ចប់' : 'Mark Completed')}
                         >
-                          {isCompleted && <CheckCircle className="w-3.5 h-3.5" />}
+                          {isCompleted && <CheckCircle className="w-3 h-3" />}
                         </button>
                       </td>
 
                       {/* Code & Title */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
+                      <td className="py-2 px-3">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-mono font-bold text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded text-[10px]">
                             {act.code}
                           </span>
                           <span className={`font-semibold text-slate-900 ${isCompleted ? 'line-through text-slate-400' : ''}`}>
                             {act.title}
                           </span>
                           {act.isMilestone && (
-                            <span className="inline-flex items-center space-x-1 text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">
+                            <span className="inline-flex items-center space-x-0.5 text-[9px] bg-purple-100 text-purple-800 px-1.5 py-0.2 rounded font-bold">
                               <Flag className="w-2.5 h-2.5" />
                               <span>{lang === 'km' ? 'ព្រឹត្តិការណ៍គន្លឹះ' : 'Milestone'}</span>
                             </span>
                           )}
                         </div>
                         {act.deliverableOutput && (
-                          <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                          <div className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
                             {lang === 'km' ? 'លទ្ធផល៖' : 'Output:'} {act.deliverableOutput}
                           </div>
                         )}
                         {act.dependencies && act.dependencies.length > 0 && (
-                          <div className="text-[10px] text-amber-600 font-medium mt-0.5 flex items-center space-x-1">
+                          <div className="text-[9px] text-amber-600 font-medium mt-0.5 flex items-center space-x-1">
                             <span>{lang === 'km' ? 'ទាមទារជាមុន៖' : 'Requires:'}</span>
                             <span className="font-mono">
                               {act.dependencies.map(depId => activities.find(a => a.id === depId)?.code).filter(Boolean).join(', ')}
                             </span>
                           </div>
                         )}
-                        {act.lastAdjustmentReason && (
-                          <div className="mt-1 flex items-center space-x-1">
-                            <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded font-medium truncate max-w-[260px]">
-                              {lang === 'km' ? 'ការកែសម្រួល៖ ' : 'Adjustment: '}
-                              {act.lastAdjustmentReason}
-                            </span>
-                          </div>
-                        )}
                       </td>
 
                       {/* Action Plan */}
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-800 truncate max-w-[160px]">
+                      <td className="py-2 px-3">
+                        <div className="font-medium text-slate-800 truncate max-w-[140px] text-xs">
                           {plan?.planNumber}
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate max-w-[160px]">
+                        <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
                           {plan?.title}
                         </div>
                       </td>
 
                       {/* Assignee & Leader */}
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-800">{assignee?.name}</div>
+                      <td className="py-2 px-3">
+                        <div className="font-medium text-slate-800 text-xs">{assignee?.name}</div>
                         <div className="text-[10px] text-slate-400">
                           {lang === 'km' ? 'ប្រធាន៖' : 'Lead:'} {leader?.name}
                         </div>
                       </td>
 
                       {/* Weight */}
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-700">
+                      <td className="py-2 px-2 text-center font-mono font-semibold text-slate-700 text-xs">
                         {act.weightPercentage}%
                       </td>
 
                       {/* Due Date */}
-                      <td className="py-3 px-4 text-slate-700 font-medium">
+                      <td className="py-2 px-2.5 text-slate-700 font-medium text-xs">
                         {act.dueDate}
                       </td>
 
                       {/* Progress */}
-                      <td className="py-3 px-4 min-w-[100px]">
-                        <div className="flex justify-between items-center text-[10px] mb-1">
+                      <td className="py-2 px-3 min-w-[90px]">
+                        <div className="flex justify-between items-center text-[10px] mb-0.5">
                           <span className="font-mono font-bold text-slate-800">{act.progressPercentage}%</span>
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                           <div 
                             className={`h-full rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-blue-600'}`}
                             style={{ width: `${act.progressPercentage}%` }}
-                          ></div>
+                          />
                         </div>
                       </td>
 
                       {/* Status */}
-                      <td className="py-3 px-4">
+                      <td className="py-2 px-2.5">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${statusColors[act.status]}`}>
                           {getStatusLabel(act.status)}
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-2 px-3 text-right">
                         <div className="flex items-center justify-end space-x-1">
                           <button
                             onClick={() => setScheduleActivity(act)}
                             className="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-slate-100"
                             title={lang === 'km' ? 'កែសម្រួលកាលបរិច្ឆេទ & អាទិភាព' : 'Manage Deadline & Priority'}
                           >
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setProgressActivity(act)}
                             className="p-1 rounded text-slate-500 hover:text-emerald-600 hover:bg-slate-100"
                             title={lang === 'km' ? 'កែប្រែវឌ្ឍនភាព' : 'Update Progress'}
                           >
-                            <TrendingUp className="w-4 h-4" />
+                            <TrendingUp className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleOpenEdit(act)}
                             className="p-1 rounded text-slate-500 hover:text-blue-600 hover:bg-slate-100"
                             title={lang === 'km' ? 'កែសម្រួលសកម្មភាព' : 'Edit Activity'}
                           >
-                            <Edit3 className="w-4 h-4" />
+                            <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => {
@@ -636,7 +738,7 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
                             className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition cursor-pointer"
                             title={lang === 'km' ? 'លុបសកម្មភាព' : 'Delete Activity'}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>

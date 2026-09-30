@@ -249,8 +249,8 @@ export default function App() {
           onOpenHelp={() => setIsHelpModalOpen(true)}
         />
 
-        {/* Content Area - Full width with responsive padding */}
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 overflow-x-hidden min-w-0 w-full pb-24 lg:pb-6">
+        {/* Content Area - Mobile-app-like compact padding, eliminating bloated margins */}
+        <main className="flex-1 p-2 sm:p-3 lg:p-4 overflow-x-hidden min-w-0 w-full pb-20 lg:pb-4">
           {isAccessDenied ? (
             <AccessDeniedView
               currentUser={currentUser}

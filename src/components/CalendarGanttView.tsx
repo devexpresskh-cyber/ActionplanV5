@@ -126,14 +126,14 @@ export const CalendarGanttView: React.FC<CalendarGanttViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5 sm:space-y-3.5 max-w-7xl mx-auto">
       {/* Header and Controls */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
             {t.calendarGantt}
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             {lang === 'km'
               ? 'មើលឃើញពីដំណាក់កាលសំខាន់ៗរបស់អង្គភាព បន្ទាត់ពេលវេលា Gantt ភាពអាស្រ័យនៃកិច្ចការ និងកាលបរិច្ឆេទកំណត់។'
               : 'Visualize organizational milestones, Gantt timelines, task dependencies, and deadlines.'}
@@ -141,44 +141,44 @@ export const CalendarGanttView: React.FC<CalendarGanttViewProps> = ({
         </div>
 
         {/* View Toggle */}
-        <div className="flex items-center space-x-2">
-          <div className="bg-slate-100 p-1 rounded-lg flex items-center space-x-1 text-xs font-semibold">
+        <div className="flex items-center space-x-2 shrink-0">
+          <div className="bg-slate-100 p-0.5 rounded-lg flex items-center space-x-1 text-xs font-semibold">
             <button
               onClick={() => setActiveMode('gantt')}
-              className={`px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition ${
-                activeMode === 'gantt' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              className={`px-2.5 py-1 rounded-md flex items-center space-x-1.5 transition ${
+                activeMode === 'gantt' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <BarChart2 className="w-3.5 h-3.5" />
-              <span>{lang === 'km' ? 'បន្ទាត់ពេលវេលា Gantt' : 'Gantt Timeline'}</span>
+              <span>{lang === 'km' ? 'បន្ទាត់ Gantt' : 'Gantt'}</span>
             </button>
             <button
               onClick={() => setActiveMode('calendar')}
-              className={`px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition ${
-                activeMode === 'calendar' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              className={`px-2.5 py-1 rounded-md flex items-center space-x-1.5 transition ${
+                activeMode === 'calendar' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <CalendarIcon className="w-3.5 h-3.5" />
-              <span>{lang === 'km' ? 'ក្រឡាប្រតិទិន' : 'Calendar Grid'}</span>
+              <span>{lang === 'km' ? 'ប្រតិទិន' : 'Calendar'}</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center space-x-2">
+      <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center space-x-1.5">
           <Filter className="w-3.5 h-3.5 text-slate-400" />
           <span className="font-semibold text-slate-700">
             {lang === 'km' ? 'ត្រងតាម៖' : 'Filter By:'}
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <select
             value={filterDept}
             onChange={e => setFilterDept(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden"
+            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden text-xs"
           >
             <option value="all">{lang === 'km' ? 'គ្រប់នាយកដ្ឋាន' : 'All Departments'}</option>
             {departments.map(d => (
@@ -189,7 +189,7 @@ export const CalendarGanttView: React.FC<CalendarGanttViewProps> = ({
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden"
+            className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-hidden text-xs"
           >
             <option value="all">{lang === 'km' ? 'គ្រប់ស្ថានភាព' : 'All Statuses'}</option>
             <option value="Draft">{lang === 'km' ? 'ព្រាង' : 'Draft'}</option>
