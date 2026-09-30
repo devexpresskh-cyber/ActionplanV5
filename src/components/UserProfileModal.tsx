@@ -359,14 +359,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block font-semibold text-slate-700">Phone Number</label>
+                        <span className="text-[10px] text-emerald-600 font-medium">Used for Phone Login</span>
+                      </div>
                       <input
                         type="text"
                         value={editPhone}
                         onChange={e => setEditPhone(e.target.value)}
-                        placeholder="+855 12 345 678"
-                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                        placeholder="012 345 678 or +855 12 345 678"
+                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden font-mono"
                       />
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">Enables login using mobile phone and account password</span>
                     </div>
                   </div>
 
@@ -448,11 +452,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     </div>
 
                     <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center space-x-1">
-                        <Phone className="w-3 h-3" />
-                        <span>Contact Phone</span>
-                      </span>
-                      <p className="font-semibold text-slate-900">{user.phone || 'Not recorded'}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center space-x-1">
+                          <Phone className="w-3 h-3 text-blue-600" />
+                          <span>Contact Phone</span>
+                        </span>
+                        {user.phone && (
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            Phone Login Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-semibold text-slate-900 font-mono">{user.phone || 'Not recorded'}</p>
                     </div>
                   </div>
 

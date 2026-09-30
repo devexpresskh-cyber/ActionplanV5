@@ -39,6 +39,9 @@ import {
   Phone,
   Send,
   Bell,
+  QrCode,
+  Zap,
+  Camera,
 } from 'lucide-react';
 import {
   User as UserType,
@@ -51,6 +54,7 @@ import {
 import { translations } from '../services/i18n';
 import { db, WORK_SHIFTS } from '../services/db';
 import { webPushService } from '../services/webPushService';
+import { QrAttendanceScannerModal } from './QrAttendanceScannerModal';
 import { WebPushNotificationModal } from './WebPushNotificationModal';
 import { ManualAttendanceModal } from './ManualAttendanceModal';
 import { AttendanceDossierModal } from './AttendanceDossierModal';
@@ -170,6 +174,62 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
   const [showCheckInForm, setShowCheckInForm] = useState(false);
   const [showCheckOutForm, setShowCheckOutForm] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<AttendanceRecord | null>(null);
+
+  // Instant QR Attendance Scanner Modal State
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [qrModalTab, setQrModalTab] = useState<'scanner' | 'my-badge' | 'kiosk-display'>('scanner');
+  const handleOpenQrScanner = (tab: 'scanner' | 'my-badge' | 'kiosk-display' = 'scanner') => {
+    setQrModalTab(tab);
+    setIsQrModalOpen(true);
+  };
+
+  // Structured dual shift status for today (Morning 08:00 - 12:00 and Evening 13:00 - 17:00)
+  const todayShiftStatus = useMemo(() => db.getTodayShiftStatus(currentUser.id), [currentUser.id, records]);
+
+  // Handle Shift-specific 1-tap clock in/out
+  const handleShiftClockIn = (shift: ShiftType) => {
+    const res = db.checkIn(
+      currentUser.id,
+      `Clock-in for ${shift} Shift`,
+      checkInLocation || 'Phnom Penh HQ - Main Tower',
+      shift,
+      undefined,
+      {
+        clientIp: currentConnection.clientIp,
+        networkId: currentConnection.networkId,
+        forceSeamless: currentConnection.isWhitelisted && networkSettings.seamlessCheckInEnabled,
+      },
+      'Web Portal'
+    );
+    if (res.success) {
+      webPushService.sendCheckInAlert({
+        userName: currentUser.name,
+        shift: shift,
+        time: res.record?.checkInTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: res.record?.status || 'Present',
+        location: checkInLocation,
+      });
+    }
+    refreshData();
+    setNotificationBanner(res.message);
+    setTimeout(() => setNotificationBanner(null), 4500);
+  };
+
+  const handleShiftClockOut = (shift: ShiftType) => {
+    const res = db.checkOut(currentUser.id, `${shift} Shift completed`, shift, 'Web Portal');
+    if (res.success) {
+      webPushService.sendCheckOutAlert({
+        userName: currentUser.name,
+        shift: shift,
+        time: res.record?.checkOutTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        workingHours: res.record?.workingHours || 4,
+        overtimeHours: res.record?.overtimeHours || 0,
+      });
+    }
+    refreshData();
+    setNotificationBanner(res.message);
+    setTimeout(() => setNotificationBanner(null), 4500);
+  };
 
   const departments = db.getDepartments();
   const users = db.getUsers();
@@ -462,244 +522,459 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
           </div>
         </div>
 
-        {/* User's Personal Clock In / Out Action Banner */}
-        <div className="mt-5 pt-5 border-t border-slate-100 bg-gradient-to-r from-slate-50 via-blue-50/20 to-slate-50 p-4 rounded-xl border border-slate-200">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <div className={`w-3 h-3 rounded-full shrink-0 ${
-                todayRecord?.checkOutTime 
-                  ? 'bg-slate-400' 
-                  : todayRecord?.checkInTime 
-                  ? 'bg-emerald-500 animate-pulse' 
+        {/* ========================================================= */}
+        {/* PEAK HOURS INSTANT QR SHIFT ATTENDANCE COMMAND BANNER     */}
+        {/* ========================================================= */}
+        <div className="mt-5 rounded-2xl bg-gradient-to-r from-slate-900 via-cyan-950/60 to-slate-900 border border-cyan-500/40 p-4 sm:p-5 shadow-xl shadow-cyan-950/20 text-white relative overflow-hidden">
+          {/* Background Ambient Glow */}
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+            <div className="flex items-start sm:items-center space-x-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-cyan-500/30 shrink-0">
+                <QrCode className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                    <span>{lang === 'km' ? 'ម៉ាស៊ីនស្កេន QR វត្តមានចូល-ចេញរហ័ស (Peak-Hours Fast Track)' : 'Peak Hours Instant Shift Check-In & Check-Out'}</span>
+                  </h3>
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 shadow-xs">
+                    <Zap className="w-3 h-3 text-cyan-400" />
+                    <span>&lt; 0.2s Scan</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  {lang === 'km'
+                    ? 'ស្កេនកូដ QR ភ្លាមៗដើម្បីចូល ឬចេញពីធ្វើការក្នុងម៉ោងមមាញឹក។ បុគ្គលិកទាំងអស់ត្រូវកត់ត្រាវត្តមានទាំង ២ វេន៖ វេនព្រឹក (០៨:០០ - ១២:០០) និង វេនល្ងាច (១៣:០០ - ១៧:០០)។'
+                    : 'Instantaneous QR code shift check-in and checkout to eliminate bottleneck lines during rush hours. Staff must check in for BOTH Morning (08:00 - 12:00) and Evening (13:00 - 17:00) shifts.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick QR Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleOpenQrScanner('scanner')}
+                className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-cyan-500/25 transition"
+              >
+                <Camera className="w-4 h-4" />
+                <span>{lang === 'km' ? 'ស្កេន QR ភ្លាមៗ (Fast-Track)' : 'Scan QR Code (Instant)'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenQrScanner('my-badge')}
+                className="flex items-center space-x-1.5 px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 rounded-xl font-semibold text-xs transition"
+              >
+                <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                <span>{lang === 'km' ? 'កាត QR របស់ខ្ញុំ' : 'My QR Badge'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenQrScanner('kiosk-display')}
+                className="flex items-center space-x-1.5 px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 rounded-xl font-semibold text-xs transition"
+              >
+                <Building2 className="w-4 h-4 text-indigo-400" />
+                <span>{lang === 'km' ? 'ច្រកទ្វារ Kiosk' : 'Station Kiosk'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* MANDATORY DUAL-SHIFT DAILY SCHEDULE & STATUS COMMAND CARD */}
+        {/* ========================================================= */}
+        <div className="mt-4 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
+          
+          {/* Card Top: Policy Requirement Notice & Overall Daily Progress */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div className="flex items-center space-x-2.5">
+              <span className={`w-3 h-3 rounded-full shrink-0 ${
+                todayShiftStatus.bothCompleted 
+                  ? 'bg-emerald-500' 
+                  : todayShiftStatus.hasMorningIn || todayShiftStatus.hasEveningIn
+                  ? 'bg-blue-500 animate-pulse'
                   : 'bg-amber-500'
               }`} />
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold text-slate-800">
+                  <span className="text-sm font-bold text-slate-900">
                     {currentUser.name} ({currentUser.role})
                   </span>
-                  {todayRecord?.shiftType && (
-                    <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      todayRecord.shiftType === 'Evening'
-                        ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                        : 'bg-amber-100 text-amber-800 border border-amber-200'
-                    }`}>
-                      {todayRecord.shiftType === 'Evening' ? <Moon className="w-2.5 h-2.5" /> : <Sun className="w-2.5 h-2.5" />}
-                      <span>{todayRecord.shiftType === 'Evening' ? (lang === 'km' ? 'វេនល្ងាច' : 'Evening Shift') : (lang === 'km' ? 'វេនព្រឹក' : 'Morning Shift')}</span>
-                    </span>
-                  )}
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {currentUser.employeeId || 'EMP'}
+                  </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {todayRecord?.checkOutTime ? (
-                    <span className="text-slate-700 font-medium">
-                      {lang === 'km' ? 'បានបញ្ចប់វេន៖' : 'Shift Completed:'} {todayRecord.checkInTime} - {todayRecord.checkOutTime} ({todayRecord.workingHours} {lang === 'km' ? 'ម៉ោង' : 'hrs logged'}{todayRecord.overtimeHours > 0 ? `, ${todayRecord.overtimeHours}h OT` : ''}) &bull; {todayRecord.workShift}
-                    </span>
-                  ) : todayRecord?.checkInTime ? (
-                    <span className="text-emerald-700 font-medium">
-                      {lang === 'km' ? 'បានកត់ត្រាចូលនៅ' : 'Clocked in at'} <span className="font-bold">{todayRecord.checkInTime}</span> ({todayRecord.status}) &bull; {todayRecord.workShift} &bull; {todayRecord.location || 'Office HQ'}
-                      {todayRecord.networkWhitelisted && (
-                        <span className="ml-1.5 px-1.5 py-0.2 rounded bg-teal-100 text-teal-800 text-[10px] font-bold">
-                          IP Verified
-                        </span>
-                      )}
-                    </span>
-                  ) : (
-                    <span className="text-amber-700 font-medium">
-                      {lang === 'km'
-                        ? 'មិនទាន់បានកត់ត្រាចូលថ្ងៃនេះទេ។ សូមជ្រើសរើសវេនការងាររបស់អ្នក ហើយកត់ត្រាចូលដើម្បីចុះវត្តមាន។'
-                        : 'Not clocked in today. Please select your shift and clock in to register your attendance.'}
-                    </span>
-                  )}
+                <p className="text-xs text-slate-500">
+                  {lang === 'km' 
+                    ? 'កាតព្វកិច្ចចុះវត្តមាន ២ វេន/ថ្ងៃ (បុគ្គលិកត្រូវកត់ត្រាចូល និងចេញទាំងវេនព្រឹក និងវេនល្ងាច)' 
+                    : 'Mandatory Dual-Shift Policy: Staff must check in and out for BOTH Morning and Evening shifts.'}
                 </p>
-
-                {/* Workplace IP Presence Chip */}
-                <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
-                    <Globe className="w-3.5 h-3.5 text-teal-600" />
-                    <span className="font-mono text-[11px] font-semibold">{currentConnection.clientIp}</span>
-                    <span className="text-slate-400 text-[10px]">({currentConnection.networkName || 'Client IP'})</span>
-                  </span>
-
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      currentConnection.isWhitelisted
-                        ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300'
-                        : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
-                    }`}
-                  >
-                    {currentConnection.isWhitelisted
-                      ? lang === 'km' ? 'IP អនុញ្ញាត (Whitelisted)' : 'Whitelisted IP (Seamless)'
-                      : lang === 'km' ? 'IP ក្រៅប្រព័ន្ធ' : 'External / Remote IP'}
-                  </span>
-
-                  {currentConnection.isWhitelisted && networkSettings.seamlessCheckInEnabled && (
-                    <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{lang === 'km' ? 'កត់ត្រារហ័ស ១-Tap សកម្ម' : '1-Tap Seamless Ready'}</span>
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              {!todayRecord?.checkInTime ? (
-                <>
-                  {!showCheckInForm ? (
-                    <button
-                      onClick={() => setShowCheckInForm(true)}
-                      className="flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition active:scale-95"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      <span>{t.checkInNow || 'Clock In Now'}</span>
-                    </button>
-                  ) : (
-                    <div className="flex flex-col gap-2 bg-white p-3 rounded-xl border border-emerald-200 shadow-sm w-full sm:w-auto">
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        {/* 2-Shift Toggle Buttons */}
-                        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg">
-                          <button
-                            type="button"
-                            onClick={() => setCheckInShift('Morning')}
-                            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-semibold transition ${
-                              checkInShift === 'Morning'
-                                ? 'bg-white text-amber-800 shadow-xs ring-1 ring-amber-400/50'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <Sun className="w-3 h-3 text-amber-500" />
-                            <span>{t.morningShiftShort || 'Morning'}</span>
-                            <span className="text-[10px] text-slate-400 font-normal ml-0.5">(08:00)</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCheckInShift('Evening')}
-                            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-semibold transition ${
-                              checkInShift === 'Evening'
-                                ? 'bg-white text-indigo-800 shadow-xs ring-1 ring-indigo-400/50'
-                                : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                          >
-                            <Moon className="w-3 h-3 text-indigo-500" />
-                            <span>{t.eveningShiftShort || 'Evening'}</span>
-                            <span className="text-[10px] text-slate-400 font-normal ml-0.5">(14:00)</span>
-                          </button>
-                        </div>
+            {/* Overall Daily Compliance Badge */}
+            <div className="flex items-center space-x-2 shrink-0">
+              <span className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl text-xs font-bold ${
+                todayShiftStatus.bothCompleted
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  : todayShiftStatus.morningCompleted
+                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                  : todayShiftStatus.hasMorningIn
+                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200'
+              }`}>
+                {todayShiftStatus.bothCompleted ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{lang === 'km' ? 'បានបញ្ចប់ទាំង ២ វេន (១០០%)' : 'Both Shifts Completed (100%)'}</span>
+                  </>
+                ) : todayShiftStatus.morningCompleted ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{lang === 'km' ? 'វេនព្រឹកបានបញ្ចប់ • រង់ចាំវេនល្ងាច' : 'Morning Completed • Evening Pending'}</span>
+                  </>
+                ) : todayShiftStatus.hasMorningIn ? (
+                  <>
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{lang === 'km' ? 'កំពុងបំពេញវេនព្រឹក' : 'Morning Shift In Progress'}</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{lang === 'km' ? 'មិនទាន់កត់ត្រាចូលថ្ងៃនេះ' : 'Pending Morning & Evening Check-In'}</span>
+                  </>
+                )}
+                <span className="font-mono text-xs font-black ml-1">({todayShiftStatus.totalHours}h)</span>
+              </span>
+            </div>
+          </div>
 
-                        <input
-                          type="text"
-                          placeholder={lang === 'km' ? 'កំណត់ចំណាំ (ជាជម្រើស)...' : 'Notes (optional)...'}
-                          value={checkInNotes}
-                          onChange={e => setCheckInNotes(e.target.value)}
-                          className="text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-500 w-36"
-                        />
-                        <select
-                          value={checkInLocation}
-                          onChange={e => setCheckInLocation(e.target.value)}
-                          className="text-xs px-2 py-1.5 border border-slate-200 rounded-lg focus:outline-hidden bg-white"
-                        >
-                          <option value="Phnom Penh HQ - Main Tower">{lang === 'km' ? 'ការិយាល័យកណ្តាល (HQ)' : 'HQ Tower'}</option>
-                          <option value="HQ Data Center - Room 102">{lang === 'km' ? 'មជ្ឈមណ្ឌលទិន្នន័យ (DC)' : 'Data Center'}</option>
-                          <option value="Tech Wing - Engineering Desk">{lang === 'km' ? 'ផ្នែកបច្ចេកវិទ្យា' : 'Tech Wing'}</option>
-                          <option value="Remote / Client Field Site">{lang === 'km' ? 'ពីចម្ងាយ / ការដ្ឋាន' : 'Remote / Field'}</option>
-                        </select>
-                        <button
-                          onClick={handleCheckIn}
-                          className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs flex items-center space-x-1"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{lang === 'km' ? 'បញ្ជាក់ចូល' : 'Confirm Clock In'}</span>
-                        </button>
-                        <button
-                          onClick={() => setShowCheckInForm(false)}
-                          className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-800"
-                        >
-                          {lang === 'km' ? 'បោះបង់' : 'Cancel'}
-                        </button>
-                      </div>
-
-                      {/* Workplace IP Connection Status */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-[11px]">
-                        <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400">
-                          <Globe className="w-3.5 h-3.5 text-teal-600" />
-                          <span>
-                            {lang === 'km' ? 'អាសយដ្ឋាន IP:' : 'Client IP:'}{' '}
-                            <strong className="text-slate-800 dark:text-slate-200">{currentConnection.clientIp}</strong> ({currentConnection.networkName || 'Workplace IP'})
-                          </span>
-                        </div>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            currentConnection.isWhitelisted
-                              ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300'
-                              : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
-                          }`}
-                        >
-                          {currentConnection.isWhitelisted
-                            ? (lang === 'km' ? 'IP អនុញ្ញាត' : 'Whitelisted IP')
-                            : (lang === 'km' ? 'IP ក្រៅប្រព័ន្ធ' : 'External IP')}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : !todayRecord.checkOutTime ? (
+          {/* Dual Shifts Display Grid: Morning Shift & Evening Shift Side-by-Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* ☀️ SHIFT 1: MORNING SHIFT (08:00 - 12:00) */}
+            <div className={`p-4 rounded-2xl border transition-all ${
+              todayShiftStatus.morningCompleted
+                ? 'bg-emerald-50/40 border-emerald-200/80 shadow-2xs'
+                : todayShiftStatus.hasMorningIn && !todayShiftStatus.hasMorningOut
+                ? 'bg-amber-50/50 border-amber-300 shadow-sm ring-1 ring-amber-400/40'
+                : 'bg-slate-50/70 border-slate-200 hover:border-amber-300/80'
+            }`}>
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/60">
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleOpenEditShift(todayRecord)}
-                    className="flex items-center space-x-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs transition active:scale-95"
-                    title={lang === 'km' ? 'កែប្រែប្រភេទវេន ឬម៉ោង' : 'Edit shift type, hours or clock timings'}
-                  >
-                    <Pencil className="w-3.5 h-3.5 text-blue-600" />
-                    <span>{lang === 'km' ? 'កែប្រែវេន' : 'Edit Shift'}</span>
-                  </button>
-                  {!showCheckOutForm ? (
-                    <button
-                      onClick={() => setShowCheckOutForm(true)}
-                      className="flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition active:scale-95"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>{t.checkOutNow || 'Clock Out Now'}</span>
-                    </button>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-xs w-full sm:w-auto">
-                      <input
-                        type="text"
-                        placeholder={lang === 'km' ? 'កំណត់ចំណាំពេលចេញ...' : 'Checkout notes / summary...'}
-                        value={checkOutNotes}
-                        onChange={e => setCheckOutNotes(e.target.value)}
-                        className="text-xs px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-hidden focus:ring-1 focus:ring-rose-500 w-full sm:w-52"
-                      />
-                      <button
-                        onClick={handleCheckOut}
-                        className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-md"
-                      >
-                        {lang === 'km' ? 'បញ្ជាក់ការចេញ' : 'Confirm Clock Out'}
-                      </button>
-                      <button
-                        onClick={() => setShowCheckOutForm(false)}
-                        className="px-2 py-1.5 text-xs text-slate-500 hover:text-slate-800"
-                      >
-                        {lang === 'km' ? 'បោះបង់' : 'Cancel'}
-                      </button>
-                    </div>
-                  )}
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                    <Sun className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                      <span>{lang === 'km' ? 'វេនព្រឹក (Morning Shift)' : 'Morning Shift'}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-normal bg-amber-100 text-amber-800">
+                        08:00 - 12:00
+                      </span>
+                    </h4>
+                    <span className="text-[10px] text-slate-500">
+                      {lang === 'km' ? 'អនុគ្រោះមកយឺតដល់ ០៨:១៥' : 'Grace threshold to 08:15 AM'}
+                    </span>
+                  </div>
                 </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleOpenEditShift(todayRecord)}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs transition"
-                    title={lang === 'km' ? 'កែប្រែព័ត៌មានវេនថ្ងៃនេះ' : 'Edit shift details for today'}
-                  >
-                    <Pencil className="w-3.5 h-3.5 text-blue-600" />
-                    <span>{lang === 'km' ? 'កែប្រែវេន' : 'Edit Shift'}</span>
-                  </button>
-                  <span className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-200 rounded-lg">
-                    {lang === 'km' ? 'បានបិទវេន' : 'Shift Closed'}
+
+                {/* Status Indicator */}
+                {todayShiftStatus.morningCompleted ? (
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>{lang === 'km' ? 'បានបញ្ចប់' : 'Completed'}</span>
+                  </span>
+                ) : todayShiftStatus.hasMorningIn ? (
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
+                    <Clock className="w-3 h-3 text-amber-600" />
+                    <span>{lang === 'km' ? 'កំពុងបំពេញការងារ' : 'In Progress'}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                    <span>{lang === 'km' ? 'មិនទាន់កត់ត្រា' : 'Pending In'}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Shift Details & Timestamps */}
+              <div className="py-3 text-xs space-y-1.5">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{lang === 'km' ? 'ម៉ោងចូល:' : 'Clock In:'}</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {todayShiftStatus.morningRecord?.checkInTime ? (
+                      <span className="text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded">
+                        {todayShiftStatus.morningRecord.checkInTime} ({todayShiftStatus.morningRecord.status})
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </span>
                 </div>
-              )}
+
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{lang === 'km' ? 'ម៉ោងចេញ:' : 'Clock Out:'}</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {todayShiftStatus.morningRecord?.checkOutTime ? (
+                      <span className="text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                        {todayShiftStatus.morningRecord.checkOutTime}
+                      </span>
+                    ) : todayShiftStatus.hasMorningIn ? (
+                      <span className="text-amber-600 italic">Expected ~12:00</span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{lang === 'km' ? 'ម៉ោងបំពេញ / វិធីសាស្ត្រ:' : 'Duration / Method:'}</span>
+                  <span className="text-slate-800 font-medium">
+                    {todayShiftStatus.morningRecord?.workingHours ? `${todayShiftStatus.morningRecord.workingHours} hrs • ` : ''}
+                    <span className="text-slate-500 font-mono text-[11px]">
+                      {todayShiftStatus.morningRecord?.checkInMethod || '—'}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Shift Action Buttons */}
+              <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between gap-2">
+                {!todayShiftStatus.hasMorningIn ? (
+                  <div className="flex items-center space-x-2 w-full">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQrScanner('scanner')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'ស្កេន QR ចូល' : 'QR Clock In'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleShiftClockIn('Morning')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'កត់ត្រាចូល ១-Tap' : '1-Tap Clock In'}</span>
+                    </button>
+                  </div>
+                ) : !todayShiftStatus.hasMorningOut ? (
+                  <div className="flex items-center space-x-2 w-full">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQrScanner('scanner')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'ស្កេន QR ចេញ' : 'QR Clock Out'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleShiftClockOut('Morning')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'កត់ត្រាចេញ ១-Tap' : '1-Tap Clock Out'}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs font-semibold text-emerald-700 flex items-center space-x-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{lang === 'km' ? 'វេនព្រឹកបានបញ្ចប់' : 'Morning Shift Finished'}</span>
+                    </span>
+                    {todayShiftStatus.morningRecord && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditShift(todayShiftStatus.morningRecord!)}
+                        className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg shadow-2xs"
+                      >
+                        <Pencil className="w-3 h-3 inline mr-1" />
+                        {lang === 'km' ? 'កែប្រែ' : 'Edit'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 🌙 SHIFT 2: EVENING SHIFT (13:00 - 17:00) */}
+            <div className={`p-4 rounded-2xl border transition-all ${
+              todayShiftStatus.eveningCompleted
+                ? 'bg-emerald-50/40 border-emerald-200/80 shadow-2xs'
+                : todayShiftStatus.hasEveningIn && !todayShiftStatus.hasEveningOut
+                ? 'bg-indigo-50/50 border-indigo-300 shadow-sm ring-1 ring-indigo-400/40'
+                : 'bg-slate-50/70 border-slate-200 hover:border-indigo-300/80'
+            }`}>
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/60">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold">
+                    <Moon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                      <span>{lang === 'km' ? 'វេនល្ងាច (Evening Shift)' : 'Evening Shift'}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-normal bg-indigo-100 text-indigo-800">
+                        13:00 - 17:00
+                      </span>
+                    </h4>
+                    <span className="text-[10px] text-slate-500">
+                      {lang === 'km' ? 'អនុគ្រោះមកយឺតដល់ ១៣:១៥' : 'Grace threshold to 13:15 PM'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status Indicator */}
+                {todayShiftStatus.eveningCompleted ? (
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>{lang === 'km' ? 'បានបញ្ចប់' : 'Completed'}</span>
+                  </span>
+                ) : todayShiftStatus.hasEveningIn ? (
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300 animate-pulse">
+                    <Clock className="w-3 h-3 text-indigo-600" />
+                    <span>{lang === 'km' ? 'កំពុងបំពេញការងារ' : 'In Progress'}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                    <span>{lang === 'km' ? 'មិនទាន់កត់ត្រា' : 'Pending In'}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Shift Details & Timestamps */}
+              <div className="py-3 text-xs space-y-1.5">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{lang === 'km' ? 'ម៉ោងចូល:' : 'Clock In:'}</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {todayShiftStatus.eveningRecord?.checkInTime ? (
+                      <span className="text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded">
+                        {todayShiftStatus.eveningRecord.checkInTime} ({todayShiftStatus.eveningRecord.status})
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{lang === 'km' ? 'ម៉ោងចេញ:' : 'Clock Out:'}</span>
+                  <span className="font-mono font-semibold text-slate-900">
+                    {todayShiftStatus.eveningRecord?.checkOutTime ? (
+                      <span className="text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                        {todayShiftStatus.eveningRecord.checkOutTime}
+                      </span>
+                    ) : todayShiftStatus.hasEveningIn ? (
+                      <span className="text-indigo-600 italic">Expected ~17:00</span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>{lang === 'km' ? 'ម៉ោងបំពេញ / វិធីសាស្ត្រ:' : 'Duration / Method:'}</span>
+                  <span className="text-slate-800 font-medium">
+                    {todayShiftStatus.eveningRecord?.workingHours ? `${todayShiftStatus.eveningRecord.workingHours} hrs • ` : ''}
+                    <span className="text-slate-500 font-mono text-[11px]">
+                      {todayShiftStatus.eveningRecord?.checkInMethod || '—'}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Shift Action Buttons */}
+              <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between gap-2">
+                {!todayShiftStatus.hasEveningIn ? (
+                  <div className="flex items-center space-x-2 w-full">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQrScanner('scanner')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'ស្កេន QR ចូល' : 'QR Clock In'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleShiftClockIn('Evening')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'កត់ត្រាចូល ១-Tap' : '1-Tap Clock In'}</span>
+                    </button>
+                  </div>
+                ) : !todayShiftStatus.hasEveningOut ? (
+                  <div className="flex items-center space-x-2 w-full">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQrScanner('scanner')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'ស្កេន QR ចេញ' : 'QR Clock Out'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleShiftClockOut('Evening')}
+                      className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>{lang === 'km' ? 'កត់ត្រាចេញ ១-Tap' : '1-Tap Clock Out'}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs font-semibold text-emerald-700 flex items-center space-x-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{lang === 'km' ? 'វេនល្ងាចបានបញ្ចប់' : 'Evening Shift Finished'}</span>
+                    </span>
+                    {todayShiftStatus.eveningRecord && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditShift(todayShiftStatus.eveningRecord!)}
+                        className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg shadow-2xs"
+                      >
+                        <Pencil className="w-3 h-3 inline mr-1" />
+                        {lang === 'km' ? 'កែប្រែ' : 'Edit'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Workplace IP Presence Footer Chip */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-medium">
+                <Globe className="w-3.5 h-3.5 text-teal-600" />
+                <span className="font-mono text-[11px] font-semibold">{currentConnection.clientIp}</span>
+                <span className="text-slate-400 text-[10px]">({currentConnection.networkName || 'Client IP'})</span>
+              </span>
+
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                  currentConnection.isWhitelisted
+                    ? 'bg-teal-100 text-teal-800'
+                    : 'bg-amber-100 text-amber-800'
+                }`}
+              >
+                {currentConnection.isWhitelisted
+                  ? (lang === 'km' ? 'IP អនុញ្ញាត (Whitelisted)' : 'Whitelisted IP')
+                  : (lang === 'km' ? 'IP ក្រៅប្រព័ន្ធ' : 'External IP')}
+              </span>
+            </div>
+
+            <div className="text-[11px] text-slate-500 font-medium">
+              {lang === 'km' ? 'ម៉ោងកត់ត្រាប្រព័ន្ធ៖' : 'System Reference Date:'}{' '}
+              <strong className="text-slate-700">2026-09-17</strong>
             </div>
           </div>
         </div>
@@ -924,6 +1199,18 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
         {/* Action buttons */}
         {activeTab === 'daily' && (
           <div className="flex items-center space-x-2">
+            {/* Quick Instant QR Scanner Trigger */}
+            <button
+              id="btn-quick-qr-scanner-attendance"
+              onClick={() => handleOpenQrScanner('scanner')}
+              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold text-cyan-900 bg-cyan-100/80 border border-cyan-300 hover:bg-cyan-200/80 rounded-lg transition shadow-2xs"
+              title={lang === 'km' ? 'ម៉ាស៊ីនស្កេន QR វត្តមានចូល-ចេញរហ័ស (Peak-Hours Fast Track)' : 'Instant QR Code Shift Scanner (Peak-Hours Fast Track)'}
+            >
+              <QrCode className="w-3.5 h-3.5 text-cyan-700" />
+              <span>{lang === 'km' ? 'ស្កេន QR វត្តមាន' : 'Instant QR Scanner'}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
+            </button>
+
             {isEmployee && (
               <button
                 id="btn-contact-supervisor-attendance"
@@ -1034,8 +1321,8 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                 className="text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-hidden bg-white font-medium text-slate-700"
               >
                 <option value="all">{t.allShifts || (lang === 'km' ? 'គ្រប់វេនទាំងអស់' : 'All Shifts')}</option>
-                <option value="Morning">☀️ {t.morningShiftShort || 'Morning Shift'} (08:00 - 16:30)</option>
-                <option value="Evening">🌙 {t.eveningShiftShort || 'Evening Shift'} (14:00 - 22:00)</option>
+                <option value="Morning">☀️ {t.morningShiftShort || (lang === 'km' ? 'វេនព្រឹក' : 'Morning Shift')} (08:00 - 12:00)</option>
+                <option value="Evening">🌙 {t.eveningShiftShort || (lang === 'km' ? 'វេនល្ងាច' : 'Evening Shift')} (13:00 - 17:00)</option>
               </select>
 
               {/* Employee */}
@@ -1113,17 +1400,17 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                           <td className="py-3 px-3">
                             <div className="font-semibold text-slate-800">{rec.date}</div>
                             <div className="mt-1">
-                              {rec.shiftType === 'Evening' || rec.workShift?.toLowerCase().includes('evening') || rec.workShift?.toLowerCase().includes('14:00') ? (
+                              {rec.shiftType === 'Evening' || rec.workShift?.toLowerCase().includes('evening') || rec.workShift?.toLowerCase().includes('13:00') ? (
                                 <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold">
                                   <Moon className="w-3 h-3 text-indigo-500 shrink-0" />
                                   <span>{lang === 'km' ? 'វេនល្ងាច' : 'Evening'}</span>
-                                  <span className="text-[9px] text-indigo-500/80 font-mono font-normal">14:00-22:00</span>
+                                  <span className="text-[9px] text-indigo-500/80 font-mono font-normal">13:00-17:00</span>
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
                                   <Sun className="w-3 h-3 text-amber-500 shrink-0" />
                                   <span>{lang === 'km' ? 'វេនព្រឹក' : 'Morning'}</span>
-                                  <span className="text-[9px] text-amber-600/80 font-mono font-normal">08:00-16:30</span>
+                                  <span className="text-[9px] text-amber-600/80 font-mono font-normal">08:00-12:00</span>
                                 </span>
                               )}
                             </div>
@@ -1198,6 +1485,12 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                               </span>
                             </div>
                             <div className="flex flex-wrap items-center gap-1 mt-0.5 text-[10px]">
+                              {rec.checkInMethod === 'QR Code' && (
+                                <span className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded bg-cyan-100 text-cyan-800 border border-cyan-300 text-[9px] font-bold">
+                                  <QrCode className="w-2.5 h-2.5 text-cyan-600" />
+                                  <span>QR Scan</span>
+                                </span>
+                              )}
                               {(rec.zeroSignalVerified || rec.checkInMethod?.includes('Zero-Tracking')) && (
                                 <span className="inline-flex items-center px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-bold">
                                   Zero-Track
@@ -1692,6 +1985,16 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
         onClose={() => setIsWebPushModalOpen(false)}
         currentUser={currentUser}
         lang={lang}
+      />
+
+      {/* Instant QR Shift Attendance & Fast-Track Kiosk Modal */}
+      <QrAttendanceScannerModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        currentUser={currentUser}
+        lang={lang}
+        onAttendanceUpdated={refreshData}
+        initialTab={qrModalTab}
       />
     </div>
   );

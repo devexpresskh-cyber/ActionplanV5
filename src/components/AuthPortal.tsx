@@ -15,11 +15,7 @@ import {
   Phone, 
   X,
   ChevronDown,
-  ChevronUp,
-  Copy,
-  Check,
   Info,
-  ShieldCheck,
   UserCheck
 } from 'lucide-react';
 import { User, Language, UserRole } from '../types';
@@ -38,11 +34,12 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
   onLanguageChange,
 }) => {
   const t = translations[lang];
-  // Strictly two tabs: Sign In and Register. Quick 1-click role login removed.
+  // Strictly two tabs: Sign In and Register.
   const [activeTab, setActiveTab] = useState<'signin' | 'register'>('signin');
   
-  // Sign In State - Users enter credentials manually
-  const [signInEmail, setSignInEmail] = useState('');
+  // Sign In State - Users can enter Phone Number OR Email + Password
+  const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone');
+  const [signInIdentifier, setSignInIdentifier] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -63,70 +60,30 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
   const [regError, setRegError] = useState('');
   const [regLoading, setRegLoading] = useState(false);
 
-  // Forgot Password Modal
+  // Forgot Password Modal (Supports Phone or Email)
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
-  // Collapsible Corporate Credentials Reference (No 1-click login; manual typing guide)
-  const [showCredentialsGuide, setShowCredentialsGuide] = useState(false);
-  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
-
   const departments = db.getDepartments();
 
-  // Corporate demo accounts reference list
-  const corporateAccounts = [
-    {
-      role: 'Super Admin' as UserRole,
-      title: 'Chief Information Officer (CIO)',
-      email: 'sokha.superadmin@enterprise.com',
-      badgeColor: 'bg-purple-950/80 text-purple-300 border-purple-700/60',
-    },
-    {
-      role: 'Administrator' as UserRole,
-      title: 'VP of Corporate Governance',
-      email: 'chan.admin@enterprise.com',
-      badgeColor: 'bg-blue-950/80 text-blue-300 border-blue-700/60',
-    },
-    {
-      role: 'Department Manager' as UserRole,
-      title: 'Director of IT & Infrastructure',
-      email: 'sophal.manager@enterprise.com',
-      badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60',
-    },
-    {
-      role: 'Team Leader' as UserRole,
-      title: 'Lead Software Architect',
-      email: 'kosal.leader@enterprise.com',
-      badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-700/60',
-    },
-    {
-      role: 'Employee' as UserRole,
-      title: 'Cloud & Database Administrator',
-      email: 'sreymom.employee@enterprise.com',
-      badgeColor: 'bg-slate-900 text-slate-300 border-slate-700',
-    },
-    {
-      role: 'Executive / Viewer' as UserRole,
-      title: 'Chief Executive Officer (CEO)',
-      email: 'bunthoeun.executive@enterprise.com',
-      badgeColor: 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60',
-    },
-  ];
-
-  const handleCopyEmail = (email: string) => {
-    navigator.clipboard.writeText(email);
-    setCopiedEmail(email);
-    setTimeout(() => setCopiedEmail(null), 2500);
-  };
+  // Real-time matched employee detection based on entered phone
+  const matchedUser = (loginMethod === 'phone' || !signInIdentifier.includes('@')) && signInIdentifier.trim().length >= 6
+    ? db.findUserByPhone(signInIdentifier.trim())
+    : undefined;
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
     setSignInError('');
 
-    if (!signInEmail.trim()) {
-      setSignInError(lang === 'km' ? 'សូមបញ្ចូលអ៊ីមែលសាជីវកម្មរបស់អ្នក' : 'Please enter your corporate email address.');
+    const trimmed = signInIdentifier.trim();
+    if (!trimmed) {
+      setSignInError(
+        loginMethod === 'phone'
+          ? (lang === 'km' ? 'សូមបញ្ចូលលេខទូរស័ព្ទរបស់អ្នក' : 'Please enter your registered phone number.')
+          : (lang === 'km' ? 'សូមបញ្ចូលអ៊ីមែលសាជីវកម្មរបស់អ្នក' : 'Please enter your corporate email address.')
+      );
       return;
     }
     if (!signInPassword) {
@@ -137,7 +94,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
     setSignInLoading(true);
 
     setTimeout(() => {
-      const result = db.login(signInEmail, signInPassword);
+      const result = db.login(trimmed, signInPassword);
       setSignInLoading(false);
       if (result.success && result.user) {
         onLoginSuccess(result.user);
@@ -153,6 +110,10 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
 
     if (!regName.trim() || !regEmail.trim() || !regPassword) {
       setRegError(lang === 'km' ? 'សូមបំពេញរាល់ព័ត៌មានដែលត្រូវការ (*) ទាំងអស់' : 'Please complete all required fields (*).');
+      return;
+    }
+    if (!regPhone.trim()) {
+      setRegError(lang === 'km' ? 'សូមបញ្ចូលលេខទូរស័ព្ទរបស់អ្នក ដើម្បីអាចចូលដោយលេខទូរស័ព្ទបាន' : 'Please enter your mobile phone number to enable login by phone.');
       return;
     }
     if (regPassword.length < 6) {
@@ -187,8 +148,8 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
 
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail.trim()) return;
-    const res = db.resetPassword(forgotEmail);
+    if (!forgotIdentifier.trim()) return;
+    const res = db.resetPassword(forgotIdentifier);
     setForgotSuccess(res.success);
     setForgotMessage(res.message);
   };
@@ -288,8 +249,8 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-400">
                     {lang === 'km' 
-                      ? 'សូមបញ្ចូលអ៊ីមែល និងពាក្យសម្ងាត់របស់អ្នកដើម្បីចូលប្រើប្រព័ន្ធ'
-                      : 'Please enter your corporate credentials manually to proceed.'}
+                      ? 'សូមបញ្ចូលលេខទូរស័ព្ទ ឬអ៊ីមែល និងពាក្យសម្ងាត់របស់អ្នកដើម្បីចូល'
+                      : 'Please enter your phone number or corporate email and password.'}
                   </p>
                 </div>
 
@@ -310,26 +271,88 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
                   </div>
                 )}
 
+                {/* Login Method Segmented Switcher: Phone Number vs Email */}
+                <div className="flex p-1 bg-slate-950/90 rounded-2xl border border-slate-800 gap-1 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginMethod('phone');
+                      setSignInError('');
+                    }}
+                    className={`flex-1 min-h-[44px] py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center space-x-2 active:scale-[0.98] ${
+                      loginMethod === 'phone'
+                        ? 'bg-blue-600 text-white shadow-md border border-blue-500/40'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                    }`}
+                  >
+                    <Phone className="w-4 h-4 shrink-0" />
+                    <span>{lang === 'km' ? 'ចូលដោយលេខទូរស័ព្ទ' : 'Phone Number'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginMethod('email');
+                      setSignInError('');
+                    }}
+                    className={`flex-1 min-h-[44px] py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center space-x-2 active:scale-[0.98] ${
+                      loginMethod === 'email'
+                        ? 'bg-blue-600 text-white shadow-md border border-blue-500/40'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                    }`}
+                  >
+                    <Mail className="w-4 h-4 shrink-0" />
+                    <span>{lang === 'km' ? 'ចូលដោយអ៊ីមែល' : 'Email Address'}</span>
+                  </button>
+                </div>
+
                 <form onSubmit={handleSignIn} className="space-y-4">
-                  {/* Corporate Email Input - Minimum 48px Height, 16px font on mobile */}
+                  {/* Phone or Email Input - Minimum 48px Height, 16px font on mobile */}
                   <div>
-                    <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-1.5">
-                      {t.emailAddress} <span className="text-blue-400">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs sm:text-sm font-semibold text-slate-300">
+                        {loginMethod === 'phone'
+                          ? (lang === 'km' ? 'លេខទូរស័ព្ទ (Phone Number)' : 'Phone Number')
+                          : (lang === 'km' ? 'អាសយដ្ឋានអ៊ីមែលសាជីវកម្ម' : 'Corporate Email Address')}{' '}
+                        <span className="text-blue-400">*</span>
+                      </label>
+                      {matchedUser && (
+                        <span className="inline-flex items-center space-x-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-700/60 animate-in fade-in duration-150">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          <span>{matchedUser.name} ({matchedUser.role})</span>
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                        <Mail className="w-5 h-5" />
+                        {loginMethod === 'phone' ? (
+                          <Phone className="w-5 h-5 text-blue-400" />
+                        ) : (
+                          <Mail className="w-5 h-5 text-blue-400" />
+                        )}
                       </div>
                       <input
-                        type="email"
+                        type={loginMethod === 'phone' ? 'tel' : 'email'}
+                        inputMode={loginMethod === 'phone' ? 'tel' : 'email'}
                         required
-                        autoComplete="email"
-                        value={signInEmail}
-                        onChange={e => setSignInEmail(e.target.value)}
-                        placeholder="your.name@enterprise.com"
-                        className="w-full min-h-[48px] h-12 bg-slate-950/90 border border-slate-700/80 rounded-2xl pl-11 pr-4 text-base sm:text-sm text-white placeholder:text-slate-600 focus:outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition shadow-inner"
+                        autoComplete={loginMethod === 'phone' ? 'tel' : 'email'}
+                        value={signInIdentifier}
+                        onChange={e => setSignInIdentifier(e.target.value)}
+                        placeholder={
+                          loginMethod === 'phone'
+                            ? '+855 12 889 901 or 012 889 901'
+                            : 'your.name@enterprise.com'
+                        }
+                        className="w-full min-h-[48px] h-12 bg-slate-950/90 border border-slate-700/80 rounded-2xl pl-11 pr-4 text-base sm:text-sm text-white placeholder:text-slate-600 focus:outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition shadow-inner font-mono tracking-tight"
                       />
                     </div>
+                    {loginMethod === 'phone' && (
+                      <p className="text-[11px] text-slate-500 mt-1.5 pl-1">
+                        {lang === 'km'
+                          ? 'គាំទ្រទម្រង់ទាំង +855 12... និងទម្រង់ក្នុងស្រុក 012... ជាមួយដកឃ្លា ឬជាប់គ្នា'
+                          : 'Supports Cambodian (+855 12...) and local (012...) phone formats.'}
+                      </p>
+                    )}
                   </div>
 
                   {/* Password Input - Minimum 48px Height & Accessible Eye Button */}
@@ -348,7 +371,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
                     </div>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                        <Lock className="w-5 h-5" />
+                        <Lock className="w-5 h-5 text-blue-400" />
                       </div>
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -401,79 +424,6 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
                     )}
                   </button>
                 </form>
-
-                {/* Collapsible Corporate Demo Credentials Reference (Manual Typing Guide) */}
-                <div className="mt-6 pt-5 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setShowCredentialsGuide(!showCredentialsGuide)}
-                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 hover:bg-slate-950 border border-slate-800 text-xs text-slate-300 transition"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
-                      <span className="font-bold">
-                        {lang === 'km' ? 'បញ្ជីគណនីគំរូសហគ្រាស (សម្រាប់វាយបញ្ចូល)' : 'Corporate Demo Credentials Guide'}
-                      </span>
-                    </div>
-                    {showCredentialsGuide ? (
-                      <ChevronUp className="w-4 h-4 text-slate-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-slate-400" />
-                    )}
-                  </button>
-
-                  {showCredentialsGuide && (
-                    <div className="mt-2.5 p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-2xl space-y-2.5 animate-in fade-in duration-150">
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 pb-2 border-b border-slate-800/80">
-                        <span>
-                          {lang === 'km' ? 'ពាក្យសម្ងាត់រួមសម្រាប់គ្រប់គណនីគំរូ៖' : 'Universal Password for Demo Accounts:'}
-                        </span>
-                        <span className="font-mono font-bold text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/50">
-                          Password@123
-                        </span>
-                      </div>
-
-                      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                        {corporateAccounts.map(account => (
-                          <div
-                            key={account.email}
-                            className="p-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-2"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center space-x-1.5 mb-0.5">
-                                <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${account.badgeColor}`}>
-                                  {account.role}
-                                </span>
-                              </div>
-                              <p className="text-[11px] font-mono text-slate-300 truncate">
-                                {account.email}
-                              </p>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => handleCopyEmail(account.email)}
-                              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition shrink-0"
-                              title="Copy email to clipboard"
-                            >
-                              {copiedEmail === account.email ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5 text-slate-400" />
-                              )}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      <p className="text-[10px] text-slate-500 pt-1 italic">
-                        {lang === 'km'
-                          ? 'ចំណាំ៖ មុខងារ Quick 1-Click Login ត្រូវបានបិទ។ សូមចម្លង ឬវាយបញ្ចូលអ៊ីមែល និងពាក្យសម្ងាត់ខាងលើដោយផ្ទាល់ដៃ។'
-                          : 'Note: 1-click bypass is removed for security compliance. Users are required to enter credentials manually into the login form above.'}
-                      </p>
-                    </div>
-                  )}
-                </div>
               </div>
             )}
 
@@ -676,18 +626,19 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
 
                     <div>
                       <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-1">
-                        {lang === 'km' ? 'លេខទូរស័ព្ទ' : 'Phone Number'}
+                        {lang === 'km' ? 'លេខទូរស័ព្ទ (សម្រាប់ចូលគណនី)' : 'Phone Number (For Phone Login)'} <span className="text-emerald-400">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                          <Phone className="w-4 h-4" />
+                          <Phone className="w-4 h-4 text-emerald-400" />
                         </div>
                         <input
                           type="tel"
+                          required
                           value={regPhone}
                           onChange={e => setRegPhone(e.target.value)}
-                          placeholder="+855 12 345 678"
-                          className="w-full min-h-[48px] h-12 bg-slate-950/90 border border-slate-700/80 rounded-2xl pl-10 pr-4 text-base sm:text-sm text-white placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-inner"
+                          placeholder="012 345 678 or +855 12 345 678"
+                          className="w-full min-h-[48px] h-12 bg-slate-950/90 border border-slate-700/80 rounded-2xl pl-10 pr-4 text-base sm:text-sm text-white placeholder:text-slate-600 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-inner font-mono tracking-tight"
                         />
                       </div>
                     </div>
@@ -753,23 +704,28 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({
 
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
               {lang === 'km'
-                ? 'សូមបញ្ចូលអ៊ីមែលសាជីវកម្មរបស់អ្នក ដើម្បីកំណត់ពាក្យសម្ងាត់ឡើងវិញទៅកាន់ពាក្យសម្ងាត់លំនាំដើមរបស់ប្រព័ន្ធ (Password@123)'
-                : 'Enter your corporate email address to reset your account password back to default credentials (Password@123).'}
+                ? 'សូមបញ្ចូលលេខទូរស័ព្ទ ឬអ៊ីមែលសាជីវកម្មរបស់អ្នក ដើម្បីកំណត់ពាក្យសម្ងាត់ឡើងវិញទៅកាន់ពាក្យសម្ងាត់លំនាំដើម (Password@123)'
+                : 'Enter your registered phone number or corporate email address to reset your account password to default credentials (Password@123).'}
             </p>
 
             <form onSubmit={handleForgotPassword} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  {t.emailAddress}
+                  {lang === 'km' ? 'លេខទូរស័ព្ទ ឬអ៊ីមែលសាជីវកម្ម' : 'Phone Number or Email Address'}
                 </label>
-                <input
-                  type="email"
-                  required
-                  value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)}
-                  placeholder="corporate.email@enterprise.com"
-                  className="w-full min-h-[48px] h-12 bg-slate-950 border border-slate-700 rounded-2xl px-4 text-base sm:text-sm text-white focus:outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <Phone className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={forgotIdentifier}
+                    onChange={e => setForgotIdentifier(e.target.value)}
+                    placeholder="+855 12 889 901 or corporate.email@enterprise.com"
+                    className="w-full min-h-[48px] h-12 bg-slate-950 border border-slate-700 rounded-2xl pl-10 pr-4 text-base sm:text-sm text-white placeholder:text-slate-600 focus:outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-mono"
+                  />
+                </div>
               </div>
 
               {forgotMessage && (

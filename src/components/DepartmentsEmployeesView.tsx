@@ -940,16 +940,24 @@ export const DepartmentsEmployeesView: React.FC<DepartmentsEmployeesViewProps> =
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    {lang === 'km' ? 'លេខទូរស័ព្ទ' : 'Phone Number'}
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-slate-700">
+                      {lang === 'km' ? 'លេខទូរស័ព្ទ' : 'Phone Number'}
+                    </label>
+                    <span className="text-[10px] text-emerald-600 font-medium">
+                      {lang === 'km' ? 'ចូលដោយលេខទូរស័ព្ទ' : 'Phone Login'}
+                    </span>
+                  </div>
                   <input
                     type="text"
                     value={empPhone}
                     onChange={e => setEmpPhone(e.target.value)}
-                    placeholder="+855 12 345 678"
-                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    placeholder="012 345 678 or +855 12 345 678"
+                    className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden font-mono"
                   />
+                  <span className="text-[10px] text-slate-500 mt-0.5 block">
+                    {lang === 'km' ? 'អនុញ្ញាតឱ្យបុគ្គលិកចូលប្រើប្រព័ន្ធដោយលេខទូរស័ព្ទ និងពាក្យសម្ងាត់' : 'Allows employee to log in with mobile phone & password'}
+                  </span>
                 </div>
 
                 <div>

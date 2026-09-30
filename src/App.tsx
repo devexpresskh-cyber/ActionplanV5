@@ -42,6 +42,7 @@ import { VoiceAssistantModal } from './components/VoiceAssistantModal';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { WebPushNotificationModal } from './components/WebPushNotificationModal';
+import { PhoneLoginModal } from './components/PhoneLoginModal';
 import { webPushService } from './services/webPushService';
 import { checkAndRunScheduledAlerts } from './services/telegramService';
 
@@ -60,6 +61,7 @@ export default function App() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
   const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState<boolean>(false);
   const [isWebPushModalOpen, setIsWebPushModalOpen] = useState<boolean>(false);
+  const [isPhoneLoginOpen, setIsPhoneLoginOpen] = useState<boolean>(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState<boolean>(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
   const [isQuickRequestModalOpen, setIsQuickRequestModalOpen] = useState<boolean>(false);
@@ -226,6 +228,7 @@ export default function App() {
         onOpenRbacMatrix={() => setShowRbacMatrixModal(true)}
         onOpenVoiceAssistant={() => setIsVoiceAssistantOpen(true)}
         onOpenWebPush={() => setIsWebPushModalOpen(true)}
+        onOpenPhoneLogin={() => setIsPhoneLoginOpen(true)}
       />
 
       {/* Main Content Layout with Responsive Sidebar */}
@@ -241,6 +244,9 @@ export default function App() {
           onOpenRbacMatrix={() => setShowRbacMatrixModal(true)}
           onOpenVoiceAssistant={() => setIsVoiceAssistantOpen(true)}
           onOpenFeedback={() => setIsFeedbackModalOpen(true)}
+          onOpenWebPush={() => setIsWebPushModalOpen(true)}
+          onOpenPhoneLogin={() => setIsPhoneLoginOpen(true)}
+          onOpenHelp={() => setIsHelpModalOpen(true)}
         />
 
         {/* Content Area - Full width with responsive padding */}
@@ -584,6 +590,21 @@ export default function App() {
         isOpen={isWebPushModalOpen}
         onClose={() => setIsWebPushModalOpen(false)}
         currentUser={currentUser}
+        lang={lang}
+      />
+
+      {/* Phone Number & Password Quick Authentication Modal */}
+      <PhoneLoginModal
+        isOpen={isPhoneLoginOpen}
+        onClose={() => setIsPhoneLoginOpen(false)}
+        onLoginSuccess={user => {
+          handleUserChange(user);
+          showToast(
+            lang === 'km' 
+              ? `បានចូលគណនីជោគជ័យជា ${user.name} (${user.role}) តាមលេខទូរស័ព្ទ` 
+              : `Logged in successfully as ${user.name} (${user.role}) via Phone`
+          );
+        }}
         lang={lang}
       />
 

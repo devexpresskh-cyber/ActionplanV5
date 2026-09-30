@@ -8,23 +8,19 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   Clock, 
-  Search,
-  ChevronDown,
-  LogOut,
-  KeyRound,
-  Shield,
-  Menu,
-  X,
-  HelpCircle,
-  MessageSquare,
-  Sparkles,
-  Mic
+  Search, 
+  ChevronDown, 
+  LogOut, 
+  KeyRound, 
+  Shield, 
+  Menu, 
+  X, 
+  Phone 
 } from 'lucide-react';
 import { User, Language, UserRole } from '../types';
 import { translations } from '../services/i18n';
 import { db } from '../services/db';
 import { NavTab } from './Sidebar';
-import { PWAInstallButton } from './PWAInstallButton';
 
 interface NavbarProps {
   currentUser: User;
@@ -43,6 +39,7 @@ interface NavbarProps {
   onOpenRbacMatrix?: () => void;
   onOpenVoiceAssistant?: () => void;
   onOpenWebPush?: () => void;
+  onOpenPhoneLogin?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -62,6 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRbacMatrix,
   onOpenVoiceAssistant,
   onOpenWebPush,
+  onOpenPhoneLogin,
 }) => {
   const t = translations[lang];
   const [showRoleMenu, setShowRoleMenu] = useState(false);
@@ -143,99 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Voice-Activated Plan Assistant - Visible from sm screens up */}
-            {onOpenVoiceAssistant && (
-              <button
-                onClick={onOpenVoiceAssistant}
-                className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-xs font-semibold text-indigo-700 transition shadow-2xs group shrink-0"
-                title={lang === 'km' ? 'ប្រព័ន្ធបញ្ជាដោយសំឡេង (Voice Assistant)' : 'Voice-Activated Plan System (Voice Assistant)'}
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                </span>
-                <Mic className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition" />
-                <span className="hidden md:inline">{lang === 'km' ? 'សំឡេង' : 'Voice'}</span>
-              </button>
-            )}
-
-            {/* Web Push Alerts Quick Action Button */}
-            {onOpenWebPush && (
-              <button
-                type="button"
-                onClick={onOpenWebPush}
-                className="flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold shadow-2xs transition shrink-0 active:scale-95"
-                title={lang === 'km' ? 'ប្រព័ន្ធជូនដំណឹង Web Push ម៉ោងចូល/ចេញ និងវេនការងារ' : 'Web Push Attendance & Shift Alerts'}
-              >
-                <Bell className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                <span className="hidden sm:inline font-bold">Push</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse hidden sm:inline-block"></span>
-              </button>
-            )}
-
-            {/* PWA App Install Button */}
-            <PWAInstallButton variant="navbar" />
-
-            {/* Mobile Hub Shortcut */}
-            {onNavigateTab && (
-              <button
-                onClick={() => onNavigateTab('employee-hub')}
-                className="hidden md:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-semibold transition shrink-0"
-                title={lang === 'km' ? 'បើកមជ្ឈមណ្ឌលបទពិសោធន៍បុគ្គលិក' : 'Open Employee Mobile Experience Hub'}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">{lang === 'km' ? 'មជ្ឈមណ្ឌល' : 'Employee Hub'}</span>
-              </button>
-            )}
-
-            {/* Quick Attendance Widget */}
-            <button
-              onClick={() => onNavigateTab && onNavigateTab('attendance')}
-              className={`hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition shrink-0 ${
-                todayAttendance?.checkOutTime
-                  ? 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                  : todayAttendance?.checkInTime
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                  : 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
-              }`}
-              title={lang === 'km' ? 'ស្ថានភាពវត្តមាន និងការតាមដានម៉ោងធ្វើការ' : 'Attendance Status & Time Tracking'}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>
-                {todayAttendance?.checkOutTime
-                  ? (lang === 'km' ? 'បានបញ្ចប់វេន' : 'Shift Closed')
-                  : todayAttendance?.checkInTime
-                  ? `${lang === 'km' ? 'ចូល៖' : 'In:'} ${todayAttendance.checkInTime}`
-                  : (lang === 'km' ? 'កត់ត្រាចូល' : 'Clock In')}
-              </span>
-            </button>
-
-            {/* RBAC Security Policy Button - Excluded for Employee role */}
-            {onOpenRbacMatrix && currentUser.role !== 'Employee' && (
-              <button
-                onClick={onOpenRbacMatrix}
-                className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition shadow-xs shrink-0"
-                title={lang === 'km' ? 'ពិនិត្យតារាងសិទ្ធិអនុញ្ញាតតាមតួនាទី (RBAC)' : 'Inspect Role-Based Access Control (RBAC) Matrix'}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>{lang === 'km' ? 'គោលការណ៍សិទ្ធិ' : 'RBAC Policy'}</span>
-              </button>
-            )}
-
-            {/* Feedback Button - Visible on tablet/desktop */}
-            {onOpenFeedback && (
-              <button
-                onClick={onOpenFeedback}
-                className="hidden md:flex p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-medium transition items-center space-x-1 shrink-0"
-                title={lang === 'km' ? 'បញ្ជូនមតិកែលម្អ និងសំណើបុគ្គលិក' : 'Submit Employee Feedback & Suggestions'}
-              >
-                <MessageSquare className="w-4 h-4 text-rose-500" />
-                <span className="hidden xl:inline text-slate-700">{lang === 'km' ? 'មតិកែលម្អ' : 'Feedback'}</span>
-              </button>
-            )}
-
             {/* Language Switcher */}
-            {/* Language Switch */}
             <button
               type="button"
               onClick={() => onLanguageChange(lang === 'en' ? 'km' : 'en')}
@@ -405,6 +311,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   )}
 
                   <div className={`px-4 pt-2 space-y-1.5 ${currentUser.role !== 'Employee' ? 'mt-1 border-t border-slate-100' : ''}`}>
+                    {onOpenPhoneLogin && (
+                      <button
+                        onClick={() => {
+                          setShowRoleMenu(false);
+                          onOpenPhoneLogin();
+                        }}
+                        className="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{lang === 'km' ? 'ចូលដោយលេខទូរស័ព្ទ & ពាក្យសម្ងាត់' : 'Login by Phone & Password'}</span>
+                      </button>
+                    )}
+
                     {onOpenRbacMatrix && currentUser.role !== 'Employee' && (
                       <button
                         onClick={() => {

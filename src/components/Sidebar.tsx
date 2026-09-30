@@ -21,7 +21,11 @@ import {
   ChevronRight,
   Info,
   Mic,
-  MessageSquare
+  MessageSquare,
+  Bell,
+  Phone,
+  HelpCircle,
+  Wrench,
 } from 'lucide-react';
 import { Language, User, NavTab } from '../types';
 import { translations } from '../services/i18n';
@@ -47,6 +51,9 @@ interface SidebarProps {
   onOpenRbacMatrix?: () => void;
   onOpenVoiceAssistant?: () => void;
   onOpenFeedback?: () => void;
+  onOpenWebPush?: () => void;
+  onOpenPhoneLogin?: () => void;
+  onOpenHelp?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -59,6 +66,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenRbacMatrix,
   onOpenVoiceAssistant,
   onOpenFeedback,
+  onOpenWebPush,
+  onOpenPhoneLogin,
+  onOpenHelp,
 }) => {
   const t = translations[lang];
   const [showLockedItems, setShowLockedItems] = useState(false);
@@ -235,6 +245,144 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </nav>
+
+      {/* System Tools & Utilities Section (Moved from header for cleaner UI) */}
+      <div className="px-3 pt-3 pb-3 mt-2 border-t border-slate-800">
+        <div className="px-1 pb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="flex items-center space-x-1.5">
+            <Wrench className="w-3.5 h-3.5 text-indigo-400" />
+            <span>{lang === 'km' ? 'ឧបករណ៍ប្រព័ន្ធ' : 'System Tools'}</span>
+          </div>
+          <span className="text-[10px] text-indigo-400 font-semibold bg-indigo-950/70 border border-indigo-900/60 px-1.5 py-0.2 rounded">
+            Quick Access
+          </span>
+        </div>
+
+        <div className="space-y-1.5">
+          {/* Voice AI Assistant */}
+          {onOpenVoiceAssistant && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isMobileView && onCloseMobile) onCloseMobile();
+                onOpenVoiceAssistant();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white bg-slate-800/60 hover:bg-indigo-950/50 border border-slate-700/60 hover:border-indigo-500/60 transition group active:scale-98"
+              title={lang === 'km' ? 'ប្រព័ន្ធបញ្ជាដោយសំឡេង (Ctrl+M)' : 'Voice-Activated Plan System (Ctrl+M)'}
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                  <Mic className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">
+                  {lang === 'km' ? 'ជំនួយការសំឡេង AI' : 'Voice AI Assistant'}
+                </span>
+              </div>
+              <span className="flex items-center space-x-1.5 shrink-0">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                <span className="text-[10px] text-indigo-300 font-mono hidden sm:inline">Ctrl+M</span>
+              </span>
+            </button>
+          )}
+
+          {/* Web Push Alerts */}
+          {onOpenWebPush && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isMobileView && onCloseMobile) onCloseMobile();
+                onOpenWebPush();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white bg-slate-800/60 hover:bg-cyan-950/50 border border-slate-700/60 hover:border-cyan-500/60 transition group active:scale-98"
+              title={lang === 'km' ? 'កំណត់ការជូនដំណឹង Web Push ម៉ោងចូល/ចេញ' : 'Web Push Attendance & Shift Alerts'}
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                  <Bell className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">
+                  {lang === 'km' ? 'ការជូនដំណឹង Web Push' : 'Web Push Alerts'}
+                </span>
+              </div>
+              <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-800/60 shrink-0">
+                Live
+              </span>
+            </button>
+          )}
+
+          {/* Quick Phone Login */}
+          {onOpenPhoneLogin && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isMobileView && onCloseMobile) onCloseMobile();
+                onOpenPhoneLogin();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white bg-slate-800/60 hover:bg-emerald-950/50 border border-slate-700/60 hover:border-emerald-500/60 transition group active:scale-98"
+              title={lang === 'km' ? 'ចូលគណនីដោយលេខទូរស័ព្ទ និងពាក្យសម្ងាត់' : 'Phone Login & Verification'}
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                  <Phone className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">
+                  {lang === 'km' ? 'ចូលលេខទូរស័ព្ទ' : 'Phone Sign In'}
+                </span>
+              </div>
+              <span className="text-[10px] text-emerald-400 font-semibold shrink-0">
+                SMS
+              </span>
+            </button>
+          )}
+
+          {/* Submit Staff Feedback */}
+          {onOpenFeedback && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isMobileView && onCloseMobile) onCloseMobile();
+                onOpenFeedback();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white bg-slate-800/60 hover:bg-rose-950/50 border border-slate-700/60 hover:border-rose-500/60 transition group active:scale-98"
+              title={lang === 'km' ? 'បញ្ជូនមតិកែលម្អបុគ្គលិក' : 'Submit Employee Feedback'}
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <div className="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">
+                  {lang === 'km' ? 'មតិកែលម្អបុគ្គលិក' : 'Employee Feedback'}
+                </span>
+              </div>
+            </button>
+          )}
+
+          {/* Help & Support Guide */}
+          {onOpenHelp && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isMobileView && onCloseMobile) onCloseMobile();
+                onOpenHelp();
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 hover:border-slate-500/60 transition group active:scale-98"
+              title={lang === 'km' ? 'មគ្គុទ្ទេសក៍ និងជំនួយ' : 'Help & Support Guide'}
+            >
+              <div className="flex items-center space-x-2.5 truncate">
+                <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">
+                  {lang === 'km' ? 'មគ្គុទ្ទេសក៍ & ជំនួយ' : 'Help & Support'}
+                </span>
+              </div>
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -310,36 +458,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-3 border-t border-slate-800">
               <PWAInstallButton variant="sidebar" label={lang === 'km' ? 'ដំឡើង PWA App លើទូរស័ព្ទ' : 'Install App to Home Screen'} />
             </div>
-
-            {/* Quick Mobile Drawer Tools */}
-            {(onOpenVoiceAssistant || onOpenFeedback) && (
-              <div className="p-3 border-t border-slate-800 bg-slate-950/30 flex items-center space-x-2">
-                {onOpenVoiceAssistant && (
-                  <button
-                    onClick={() => {
-                      if (onCloseMobile) onCloseMobile();
-                      onOpenVoiceAssistant();
-                    }}
-                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-2.5 rounded-lg bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/50 text-xs font-semibold transition"
-                  >
-                    <Mic className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>{lang === 'km' ? 'បញ្ជាសំឡេង' : 'Voice AI'}</span>
-                  </button>
-                )}
-                {onOpenFeedback && (
-                  <button
-                    onClick={() => {
-                      if (onCloseMobile) onCloseMobile();
-                      onOpenFeedback();
-                    }}
-                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-rose-400" />
-                    <span>{lang === 'km' ? 'មតិកែលម្អ' : 'Feedback'}</span>
-                  </button>
-                )}
-              </div>
-            )}
 
             {/* Footer System Status in Mobile Drawer */}
             <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 bg-slate-950/50">
