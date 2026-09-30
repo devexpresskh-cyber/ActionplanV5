@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', 'Khmer OS Battambang', 'Battambang', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Smooth mobile touch scrolling */
+.touch-pan-x {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overscroll-x-contain {
+  overscroll-behavior-x: contain;
+}
+
+/* Custom compact scrollbar for mobile & desktop */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.font-khmer {
+  font-family: 'Khmer OS Battambang', 'Battambang', system-ui, -apple-system, sans-serif !important;
+  line-height: 1.65;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    font-family: 'Khmer OS Battambang', 'Battambang', system-ui, sans-serif !important;
+  }
+}

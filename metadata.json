@@ -1,0 +1,10 @@
+{
+  "name": "Remix Action Plan Management System",
+  "description": "Enterprise Action Plan Management System with departmental objectives, activities, progress tracking, multi-tier approvals, Gantt charts, and reports.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
