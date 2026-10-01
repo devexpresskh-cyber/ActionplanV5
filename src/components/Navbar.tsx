@@ -15,7 +15,8 @@ import {
   Shield, 
   Menu, 
   X, 
-  Phone 
+  Phone,
+  Mic
 } from 'lucide-react';
 import { User, Language, UserRole } from '../types';
 import { translations } from '../services/i18n';
@@ -138,6 +139,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <kbd className="hidden sm:inline-block px-1 py-0.2 text-[10px] font-mono text-slate-400 bg-slate-200/60 rounded-xs">
                   ⌘K
                 </kbd>
+              </button>
+            )}
+
+            {/* Voice AI Assistant (Instant Access on Mobile & Desktop) */}
+            {onOpenVoiceAssistant && (
+              <button
+                type="button"
+                onClick={onOpenVoiceAssistant}
+                className="relative min-w-[38px] min-h-[38px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-xl bg-indigo-50 hover:bg-indigo-100/90 text-indigo-600 border border-indigo-200/70 transition shrink-0 active:scale-95 shadow-2xs group"
+                title={lang === 'km' ? 'ជំនួយការសំឡេង AI (Voice Assistant)' : 'Voice AI Assistant (Ctrl+M)'}
+                aria-label="Open Voice AI Assistant"
+              >
+                <Mic className="w-4 h-4 group-hover:scale-110 transition text-indigo-600" />
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
               </button>
             )}
 

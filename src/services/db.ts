@@ -2142,58 +2142,47 @@ class DatabaseService {
 
     let targetUser: User | undefined;
     let stationLocation = params.stationLocation || 'Phnom Penh HQ - Main Tower';
+    let isOfficialSystemQr = false;
 
-    // 1. Check if raw payload is JSON
+    // Strict System QR Validation: Only authentic APMS-generated QR codes can be processed
     if (raw.startsWith('{') && raw.endsWith('}')) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed.type === 'apms_employee_badge') {
+        if (parsed.type === 'apms_employee_badge' && (parsed.userId || parsed.employeeId)) {
+          isOfficialSystemQr = true;
           targetUser = this.users.find(u => 
-            u.id === parsed.userId || 
-            (parsed.employeeId && u.employeeId === parsed.employeeId) ||
-            (parsed.phone && isPhoneMatch(parsed.phone, u.phone)) ||
-            (parsed.email && u.email.toLowerCase() === parsed.email.toLowerCase())
-          );
-        } else if (parsed.type === 'apms_kiosk_station') {
-          // Employee scanned a workplace station QR code
-          targetUser = this.users.find(u => u.id === (params.scannedByUserId || this.currentUserId));
-          if (parsed.location) stationLocation = parsed.location;
-        } else if (parsed.userId || parsed.employeeId) {
-          targetUser = this.users.find(u => 
-            u.id === parsed.userId || 
+            (parsed.userId && u.id === parsed.userId) || 
             (parsed.employeeId && u.employeeId === parsed.employeeId)
           );
+        } else if (parsed.type === 'apms_kiosk_station' && (parsed.stationId || parsed.stationName)) {
+          // Employee scanned an official workplace kiosk station QR code
+          isOfficialSystemQr = true;
+          targetUser = this.users.find(u => u.id === (params.scannedByUserId || this.currentUserId));
+          if (parsed.location) stationLocation = parsed.location;
         }
       } catch {
-        // Not valid JSON, continue with text matching
+        // Not valid JSON
       }
-    }
-
-    // 2. Text / URI matching for employee ID or badge
-    if (!targetUser) {
-      if (raw.startsWith('APMS:')) {
-        const empCode = raw.replace('APMS:', '').trim();
-        targetUser = this.users.find(u => u.employeeId === empCode || u.id === empCode);
-      } else if (raw.startsWith('APMS-STATION:')) {
+    } else if (raw.startsWith('APMS-BADGE:') || raw.startsWith('APMS:EMP-') || raw.startsWith('APMS-STATION:')) {
+      isOfficialSystemQr = true;
+      if (raw.startsWith('APMS-STATION:')) {
         targetUser = this.users.find(u => u.id === (params.scannedByUserId || this.currentUserId));
-      } else if (raw.startsWith('EMP-')) {
-        targetUser = this.users.find(u => u.employeeId === raw);
-      } else if (raw.startsWith('usr-')) {
-        targetUser = this.users.find(u => u.id === raw);
-      } else if (raw.includes('@')) {
-        targetUser = this.users.find(u => u.email.trim().toLowerCase() === raw.toLowerCase());
       } else {
-        targetUser = this.users.find(u => 
-          (u.employeeId && u.employeeId.toLowerCase() === raw.toLowerCase()) ||
-          (u.phone && isPhoneMatch(raw, u.phone)) ||
-          u.name.toLowerCase() === raw.toLowerCase()
-        );
+        const empCode = raw.replace(/^APMS(-BADGE)?:/i, '').trim();
+        targetUser = this.users.find(u => u.employeeId === empCode || u.id === empCode);
       }
     }
 
-    // Fallback: If scanned by a staff member on their own device scanning an unparsed kiosk
-    if (!targetUser && params.scannedByUserId) {
-      targetUser = this.users.find(u => u.id === params.scannedByUserId);
+    // Security Gate: Reject all non-system QR codes (arbitrary text, random URLs, external codes)
+    if (!isOfficialSystemQr) {
+      return {
+        success: false,
+        action: 'none',
+        shift: 'Morning',
+        message: 'Scan Rejected: Non-system QR code detected. Only official APMS system QR codes (Employee Digital Badge or Station Kiosk QR) are permitted.',
+        sound: 'error',
+        instantTimestamp: timeStr,
+      };
     }
 
     if (!targetUser) {
@@ -2201,7 +2190,7 @@ class DatabaseService {
         success: false,
         action: 'none',
         shift: 'Morning',
-        message: `Unrecognized badge code "${raw.slice(0, 30)}...". Please scan a registered APMS employee QR code or station QR code.`,
+        message: 'System QR Validated, but target employee account was not found or is inactive.',
         sound: 'error',
         instantTimestamp: timeStr,
       };

@@ -255,6 +255,30 @@ class VoiceAssistantService {
   // --- Audio Waveform Visualizer ---
   private async startAudioAnalyser() {
     try {
+      if (typeof window === 'undefined') return;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+      
+      // On mobile operating systems (iOS Safari & Android Chrome), acquiring a second audio stream via getUserMedia
+      // locks the hardware microphone and immediately crashes or aborts the Web SpeechRecognition instance.
+      // On mobile, we use a smooth simulated voice-activity visualizer driven by recognition listening state.
+      if (isMobile) {
+        let frameCount = 0;
+        const updateSimulatedLevel = () => {
+          if (!this.isListening) {
+            this.notifyAudioLevel(0);
+            return;
+          }
+          frameCount++;
+          if (frameCount % 4 === 0) {
+            const simulated = Math.floor(Math.random() * 55) + 15;
+            this.notifyAudioLevel(simulated);
+          }
+          this.animFrameId = requestAnimationFrame(updateSimulatedLevel);
+        };
+        updateSimulatedLevel();
+        return;
+      }
+
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
       this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -285,7 +309,7 @@ class VoiceAssistantService {
 
       updateLevel();
     } catch (err) {
-      console.warn('[VoiceAssistant] Microphone audio analyser unavailable:', err);
+      console.warn('[VoiceAssistant] Microphone audio analyser non-fatal fallback:', err);
     }
   }
 
@@ -325,7 +349,14 @@ class VoiceAssistantService {
         this.recognition.lang = this.settings.recognitionLanguage || 'km-KH';
       }
       this.recognition.start();
-      await this.startAudioAnalyser();
+
+      // Safely start waveform visualizer without blocking speech recognition
+      try {
+        await this.startAudioAnalyser();
+      } catch (analyserErr) {
+        console.warn('[VoiceAssistant] Non-fatal audio visualizer init failure:', analyserErr);
+      }
+
       return true;
     } catch (err: any) {
       console.warn('[VoiceAssistant] Start listening failed:', err);

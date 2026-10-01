@@ -344,29 +344,29 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex justify-center p-2 sm:p-4 items-start sm:items-center">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex justify-center p-0 sm:p-4 items-end sm:items-center">
       <div 
-        className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94vh] sm:max-h-[90vh] my-auto animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white w-full max-w-3xl rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-slate-200 overflow-hidden flex flex-col h-[94vh] sm:h-auto sm:max-h-[90vh] my-0 sm:my-auto animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
       >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white px-3.5 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-3 relative overflow-hidden shrink-0">
+        {/* Header - Mobile Responsive & Zero-Overlap */}
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white px-3 sm:px-5 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 relative overflow-hidden shrink-0">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner shrink-0">
               <Mic className={`w-4 h-4 sm:w-5 sm:h-5 ${isListening ? 'text-emerald-300 animate-pulse' : 'text-white'}`} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
-                <h2 className="text-xs sm:text-base font-bold tracking-tight truncate">
-                  {lang === 'km' ? 'ជំនួយការសំឡេងផែនការសកម្មភាព' : 'Voice Action Plan Assistant'}
+              <div className="flex items-center space-x-1.5 sm:space-x-2 flex-wrap">
+                <h2 className="text-xs sm:text-base font-bold tracking-tight truncate max-w-[190px] sm:max-w-none">
+                  {lang === 'km' ? 'ជំនួយការសំឡេងផែនការ' : 'Voice Action Plan Assistant'}
                 </h2>
-                <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 flex items-center space-x-1 shrink-0">
+                <span className="px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 flex items-center space-x-1 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                   <span>{isListening ? 'Listening' : 'Ready'}</span>
                 </span>
               </div>
-              <p className="text-[10px] sm:text-xs text-blue-100/80 truncate">
+              <p className="text-[10px] sm:text-xs text-blue-100/80 truncate hidden sm:block">
                 {lang === 'km' 
                   ? 'បង្កើត កែប្រែ និងគ្រប់គ្រងផែនការសកម្មភាពតាមរយៈសំឡេង' 
                   : 'Voice-activated creation, updates, and management for enterprise action plans'}
@@ -380,26 +380,26 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleLanguageChange('km-KH')}
-                className={`px-1.5 sm:px-2 py-1 rounded-md text-[11px] sm:text-xs font-bold transition whitespace-nowrap flex items-center space-x-1 ${
+                className={`px-1.5 sm:px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold transition whitespace-nowrap flex items-center space-x-1 ${
                   settings.recognitionLanguage === 'km-KH'
                     ? 'bg-white text-blue-900 shadow-xs'
                     : 'text-white/80 hover:text-white'
                 }`}
                 title="Voice recognition & synthesis in Khmer (ភាសាខ្មែរ)"
               >
-                <span>🇰🇭 ខ្មែរ</span>
+                <span>🇰🇭 <span className="hidden sm:inline">ខ្មែរ</span></span>
               </button>
               <button
                 type="button"
                 onClick={() => handleLanguageChange('en-US')}
-                className={`px-1.5 sm:px-2 py-1 rounded-md text-[11px] sm:text-xs font-bold transition whitespace-nowrap flex items-center space-x-1 ${
+                className={`px-1.5 sm:px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold transition whitespace-nowrap flex items-center space-x-1 ${
                   settings.recognitionLanguage === 'en-US'
                     ? 'bg-white text-blue-900 shadow-xs'
                     : 'text-white/80 hover:text-white'
                 }`}
                 title="Voice recognition & synthesis in English"
               >
-                <span>🇺🇸 EN</span>
+                <span>🇺🇸 <span className="hidden sm:inline">EN</span></span>
               </button>
             </div>
 
@@ -427,13 +427,13 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center border-b border-slate-200 bg-slate-50/80 px-3 sm:px-4 text-xs font-semibold overflow-x-auto no-scrollbar shrink-0">
+        {/* Tab Navigation - Smooth Horizontal Scroll on Mobile */}
+        <div className="flex items-center border-b border-slate-200 bg-slate-50/90 px-2 sm:px-4 text-xs font-semibold overflow-x-auto no-scrollbar shrink-0 gap-0.5">
           <button
             onClick={() => setActiveTab('assistant')}
-            className={`px-3.5 py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 ${
+            className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
               activeTab === 'assistant'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-blue-600 text-blue-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -443,50 +443,50 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
 
           <button
             onClick={() => setActiveTab('commands')}
-            className={`px-3.5 py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 ${
+            className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
               activeTab === 'commands'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-blue-600 text-blue-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Command Structure</span>
+            <span>Commands</span>
           </button>
 
           <button
             onClick={() => setActiveTab('training')}
-            className={`px-3.5 py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 ${
+            className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
               activeTab === 'training'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-blue-600 text-blue-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Training & Practice</span>
+            <span>Training</span>
           </button>
 
           <button
             onClick={() => setActiveTab('sandbox')}
-            className={`px-3.5 py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 ${
+            className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
               activeTab === 'sandbox'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-blue-600 text-blue-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <FlaskConical className="w-3.5 h-3.5" />
-            <span>Testing & Sandbox</span>
+            <span>Sandbox</span>
           </button>
 
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-3.5 py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 ${
+            className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
               activeTab === 'history'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-blue-600 text-blue-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Activity History ({history.length})</span>
+            <span>History ({history.length})</span>
           </button>
         </div>
 
@@ -539,14 +539,14 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           {activeTab === 'assistant' && (
             <div className="space-y-5">
               {/* Mic & Waveform Card */}
-              <div className="bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-2xl p-6 shadow-lg border border-slate-800 flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <div className="bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-800 flex flex-col items-center justify-center text-center relative overflow-hidden">
                 {/* Background ambient glow */}
                 <div className={`absolute w-64 h-64 rounded-full blur-3xl pointer-events-none transition-opacity duration-700 ${
                   isListening ? 'bg-blue-500/20 opacity-100' : 'bg-indigo-500/5 opacity-50'
                 }`} />
 
                 {/* Big Mic Button with Pulsing Wave */}
-                <div className="relative mb-4">
+                <div className="relative mb-3 sm:mb-4">
                   {isListening && (
                     <>
                       <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping scale-125" />
@@ -555,7 +555,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                   )}
                   <button
                     onClick={toggleListening}
-                    className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-transform active:scale-95 ${
+                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center shadow-xl transition-transform active:scale-95 ${
                       isListening
                         ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/50'
                         : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/50 hover:scale-105'
@@ -563,9 +563,9 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                     title={isListening ? 'Click to Stop Listening' : 'Click to Speak a Plan Command'}
                   >
                     {isListening ? (
-                      <MicOff className="w-9 h-9 stroke-[2.2]" />
+                      <MicOff className="w-7 h-7 sm:w-9 sm:h-9 stroke-[2.2]" />
                     ) : (
-                      <Mic className="w-9 h-9 stroke-[2.2]" />
+                      <Mic className="w-7 h-7 sm:w-9 sm:h-9 stroke-[2.2]" />
                     )}
                   </button>
                 </div>

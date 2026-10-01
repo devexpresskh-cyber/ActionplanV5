@@ -529,22 +529,22 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
           {/* Background Ambient Glow */}
           <div className="absolute -top-12 -right-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
           
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 relative z-10">
-            <div className="flex items-center space-x-2.5">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 relative z-10">
+            <div className="flex items-center space-x-2.5 min-w-0 flex-1">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-cyan-500/30 shrink-0">
                 <QrCode className="w-5 h-5 animate-pulse" />
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-0.5 min-w-0 flex-1">
                 <div className="flex items-center space-x-2 flex-wrap">
                   <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
                     <span>{lang === 'km' ? 'ស្កេន QR វត្តមានចូល-ចេញរហ័ស' : 'Peak Hours Fast-Track QR Scanner'}</span>
                   </h3>
-                  <span className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold uppercase tracking-wider bg-cyan-950/80 text-cyan-300 border border-cyan-700/60">
+                  <span className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold uppercase tracking-wider bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 shrink-0">
                     <Zap className="w-2.5 h-2.5 text-cyan-400" />
                     <span>&lt; 0.2s</span>
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-300 line-clamp-1 max-w-xl">
+                <p className="text-[11px] text-slate-300 line-clamp-1 max-w-xl truncate">
                   {lang === 'km'
                     ? 'ស្កេនកូដ QR ភ្លាមៗដើម្បីចូល ឬចេញពីធ្វើការ។ បុគ្គលិកត្រូវកត់ត្រាទាំង ២ វេន៖ ព្រឹក និង ល្ងាច។'
                     : 'Instant QR shift check-in / checkout. Staff must record attendance for BOTH Morning and Evening shifts.'}

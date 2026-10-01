@@ -21,7 +21,6 @@ import {
   Upload,
   Download,
   Printer,
-  Sparkles,
   Zap,
   Info
 } from 'lucide-react';
@@ -364,8 +363,8 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
       const errMsg = err instanceof Error ? err.message : String(err);
       setCameraError(
         lang === 'km'
-          ? `មិនអាចបើកកាមេរ៉ាបានទេ (${errMsg})។ សូមអនុញ្ញាតសិទ្ធិកាមេរ៉ាក្នុង browser ឬប្រើការបង្ហោះរូបភាព QR ឬសាកល្បង Demo។`
-          : `Unable to access camera (${errMsg}). Please verify camera permissions or use the quick simulation options below.`
+          ? `មិនអាចបើកកាមេរ៉ាបានទេ (${errMsg})។ សូមអនុញ្ញាតសិទ្ធិកាមេរ៉ាក្នុង browser ឬប្រើការបង្ហោះរូបភាពកូដ QR ផ្លូវការ APMS ជំនួសវិញ។`
+          : `Unable to access camera (${errMsg}). Please verify camera permissions or upload an official APMS system QR code image below.`
       );
     }
   }, [facingMode, lang, stopCamera, tickScanner]);
@@ -442,40 +441,41 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
     }
   };
 
-  // Registered staff members for instant peak-hour simulation & stress testing
-  const allUsers = db.getUsers().slice(0, 6);
-
   if (!isOpen) return null;
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200 ${lang === 'km' ? 'font-khmer' : ''}`}>
       <div className="bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col text-slate-100">
         
-        {/* Header with Title & Peak Hours Fast-Track Status */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-cyan-500/25 shrink-0">
-              <QrCode className="w-5 h-5" />
+        {/* Header with Title & Peak Hours Fast-Track Status (Zero Overlap Responsive) */}
+        <div className="p-3 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/80 shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-cyan-500/25 shrink-0">
+              <QrCode className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                <h2 className="text-sm sm:text-base md:text-lg font-bold text-white tracking-tight break-words">
                   {lang === 'km' ? 'ម៉ាស៊ីនស្កេន QR វត្តមានល្បឿនលឿន' : 'Peak Hours Instant QR Shift Attendance'}
                 </h2>
-                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-700/60">
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-700/60 shrink-0">
                   <Zap className="w-3 h-3 text-cyan-400" />
                   <span>Fast-Track</span>
                 </span>
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 shrink-0">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                  <span>System QR Only</span>
+                </span>
               </div>
-              <p className="text-xs text-slate-400 flex items-center space-x-2">
+              <p className="text-[11px] sm:text-xs text-slate-400 flex flex-wrap items-center gap-1.5 mt-0.5">
                 <span>{lang === 'km' ? 'វេនព្រឹក (០៨:០០ - ១២:០០) & វេនល្ងាច (១៣:០០ - ១៧:០០)' : 'Dual Shifts: Morning (08:00 - 12:00) & Evening (13:00 - 17:00)'}</span>
-                <span className="text-slate-600">•</span>
+                <span className="text-slate-600 hidden sm:inline">•</span>
                 <span className="text-emerald-400 font-mono font-semibold">{liveClock}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
             {/* Audio Toggle Button */}
             <button
               type="button"
@@ -501,53 +501,53 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
           </div>
         </div>
 
-        {/* Tab Switcher: Scanner | My Badge | Station Kiosk */}
-        <div className="px-4 sm:px-6 pt-3 pb-2 bg-slate-950/40 border-b border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center space-x-1.5 p-1 bg-slate-900/90 rounded-2xl border border-slate-800">
+        {/* Tab Switcher: Scanner | My Badge | Station Kiosk (Mobile Responsive) */}
+        <div className="px-3 sm:px-6 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center space-x-1 sm:space-x-1.5 p-1 bg-slate-900/90 rounded-2xl border border-slate-800 overflow-x-auto no-scrollbar max-w-full">
             <button
               type="button"
               onClick={() => setActiveTab('scanner')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-2 ${
+              className={`px-2.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === 'scanner'
                   ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <Camera className="w-4 h-4" />
-              <span>{lang === 'km' ? 'កាមេរ៉ាស្កេន' : 'Instant Camera Scanner'}</span>
+              <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>{lang === 'km' ? 'កាមេរ៉ាស្កេន' : 'Scanner'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('my-badge')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-2 ${
+              className={`px-2.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === 'my-badge'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>{lang === 'km' ? 'កាត QR បុគ្គលិករបស់ខ្ញុំ' : 'My Digital QR Badge'}</span>
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>{lang === 'km' ? 'កាត QR ខ្ញុំ' : 'My Badge'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('kiosk-display')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-2 ${
+              className={`px-2.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === 'kiosk-display'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <Building2 className="w-4 h-4" />
-              <span>{lang === 'km' ? 'ម៉ាស៊ីន QR ច្រកទ្វារ (Kiosk)' : 'Station Kiosk Display'}</span>
+              <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>{lang === 'km' ? 'ច្រកទ្វារ Kiosk' : 'Station Kiosk'}</span>
             </button>
           </div>
 
           {/* Peak Hours Session Counter */}
-          <div className="flex items-center space-x-2 text-xs text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
+          <div className="flex items-center space-x-2 text-xs text-slate-300 bg-slate-900/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 shrink-0 self-start sm:self-auto">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-slate-400">{lang === 'km' ? 'ស្កេនក្នុងវេននេះ:' : 'Fast-Track Scans:'}</span>
+            <span className="text-slate-400">{lang === 'km' ? 'ស្កេនវេននេះ:' : 'Fast-Track Scans:'}</span>
             <span className="font-bold text-white font-mono text-sm">{peakHourCount}</span>
           </div>
         </div>
@@ -558,19 +558,19 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
         {activeTab === 'scanner' && (
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             
-            {/* Shift & Action Override Toolbar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+            {/* Shift & Action Override Toolbar (Responsive & Zero Overlap) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 bg-slate-950/70 p-2.5 sm:p-3 rounded-2xl border border-slate-800 text-xs">
               
               {/* Shift Selector */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-semibold text-slate-400 whitespace-nowrap">
-                  {lang === 'km' ? 'វេនការងារ:' : 'Shift:'}
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="font-semibold text-slate-400 whitespace-nowrap text-[11px] sm:text-xs shrink-0">
+                  {lang === 'km' ? 'វេន:' : 'Shift:'}
                 </span>
                 <div className="grid grid-cols-3 gap-1 flex-1">
                   <button
                     type="button"
                     onClick={() => setSelectedShiftMode('Auto')}
-                    className={`py-1 px-2 rounded-lg text-xs font-medium transition text-center ${
+                    className={`py-1 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-medium transition text-center truncate ${
                       selectedShiftMode === 'Auto'
                         ? 'bg-cyan-500 text-slate-950 font-bold shadow-xs'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -581,7 +581,7 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
                   <button
                     type="button"
                     onClick={() => setSelectedShiftMode('Morning')}
-                    className={`py-1 px-2 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 ${
+                    className={`py-1 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-medium transition flex items-center justify-center space-x-1 truncate ${
                       selectedShiftMode === 'Morning'
                         ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -593,7 +593,7 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
                   <button
                     type="button"
                     onClick={() => setSelectedShiftMode('Evening')}
-                    className={`py-1 px-2 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 ${
+                    className={`py-1 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-medium transition flex items-center justify-center space-x-1 truncate ${
                       selectedShiftMode === 'Evening'
                         ? 'bg-indigo-500 text-white font-bold shadow-xs'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -606,43 +606,43 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
               </div>
 
               {/* Action Selector */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-semibold text-slate-400 whitespace-nowrap">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span className="font-semibold text-slate-400 whitespace-nowrap text-[11px] sm:text-xs shrink-0">
                   {lang === 'km' ? 'សកម្មភាព:' : 'Action:'}
                 </span>
                 <div className="grid grid-cols-3 gap-1 flex-1">
                   <button
                     type="button"
                     onClick={() => setActionSelection('auto')}
-                    className={`py-1 px-2 rounded-lg text-xs font-medium transition text-center ${
+                    className={`py-1 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-medium transition text-center truncate ${
                       actionSelection === 'auto'
                         ? 'bg-emerald-500 text-slate-950 font-bold shadow-xs'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
-                    🔄 Auto In/Out
+                    🔄 Auto
                   </button>
                   <button
                     type="button"
                     onClick={() => setActionSelection('checkIn')}
-                    className={`py-1 px-2 rounded-lg text-xs font-medium transition text-center ${
+                    className={`py-1 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-medium transition text-center truncate ${
                       actionSelection === 'checkIn'
                         ? 'bg-emerald-600 text-white font-bold shadow-xs'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
-                    📥 Check-In
+                    📥 In
                   </button>
                   <button
                     type="button"
                     onClick={() => setActionSelection('checkOut')}
-                    className={`py-1 px-2 rounded-lg text-xs font-medium transition text-center ${
+                    className={`py-1 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-medium transition text-center truncate ${
                       actionSelection === 'checkOut'
                         ? 'bg-blue-600 text-white font-bold shadow-xs'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
-                    📤 Check-Out
+                    📤 Out
                   </button>
                 </div>
               </div>
@@ -810,47 +810,20 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
               </div>
             </div>
 
-            {/* Quick Staff Peak-Hour Simulation Row */}
-            <div className="space-y-2 pt-1">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="flex items-center space-x-1.5 font-semibold text-slate-300">
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>{lang === 'km' ? 'សាកល្បងស្កេនបុគ្គលិករហ័ស (Peak-Hours Test)' : 'Simulate Instant Staff Scan (Peak-Hours Demo)'}</span>
+              {/* System QR Verification Notice */}
+              <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="font-medium truncate">
+                    {lang === 'km' 
+                      ? 'ប្រព័ន្ធសុវត្ថិភាព QR: អនុញ្ញាតតែការស្កេនកាតផ្លូវការ APMS ប៉ុណ្ណោះ' 
+                      : 'System QR Security: Only authentic APMS badges or Station Kiosks can be scanned'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/80 shrink-0 ml-2">
+                  OFFICIAL ONLY
                 </span>
-                <span className="text-[11px] text-slate-500">1-click test simulation</span>
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {allUsers.map(u => (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => {
-                      const mockPayload = JSON.stringify({
-                        type: 'apms_employee_badge',
-                        userId: u.id,
-                        employeeId: u.employeeId,
-                        name: u.name,
-                      });
-                      handleDecodedQrCode(mockPayload);
-                    }}
-                    className="p-2 rounded-xl bg-slate-950/70 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 text-left transition flex items-center space-x-2 text-xs group"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-cyan-900/50 text-cyan-300 font-bold flex items-center justify-center shrink-0 border border-cyan-700/50 group-hover:scale-105 transition">
-                      {u.name.slice(0, 1)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-200 truncate group-hover:text-cyan-300 transition">
-                        {u.name}
-                      </p>
-                      <p className="text-[10px] text-slate-400 font-mono">
-                        {u.employeeId || u.role}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Recent Scans Drawer / Table */}
             {recentScans.length > 0 && (
