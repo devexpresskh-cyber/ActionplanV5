@@ -708,7 +708,9 @@ export const QrAttendanceScannerModal: React.FC<QrAttendanceScannerModalProps> =
                   </div>
 
                   <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-1">
-                    {activeResult.action === 'checkIn' 
+                    {!activeResult.success
+                      ? (lang === 'km' ? 'ការស្កេនត្រូវបានបដិសេធ (QR មិនត្រឹមត្រូវ)' : 'Scan Rejected: Invalid QR')
+                      : activeResult.action === 'checkIn' 
                       ? (lang === 'km' ? 'បានចូលធ្វើការជោគជ័យ!' : 'Checked In Successfully!')
                       : activeResult.action === 'checkOut'
                       ? (lang === 'km' ? 'បានចេញពីធ្វើការជោគជ័យ!' : 'Checked Out Successfully!')

@@ -8,7 +8,8 @@ import {
   PriorityLevel, 
   ParsedVoiceCommand, 
   VoiceCommandExecutionResult, 
-  VoiceSessionHistoryItem 
+  VoiceSessionHistoryItem,
+  ShiftType
 } from '../types';
 import { db } from './db';
 
@@ -198,9 +199,24 @@ class VoiceAssistantService {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
+    const isMobile = typeof navigator !== 'undefined' && 
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+
     try {
+      if (this.recognition) {
+        try {
+          this.recognition.onstart = null;
+          this.recognition.onresult = null;
+          this.recognition.onerror = null;
+          this.recognition.onend = null;
+          this.recognition.abort();
+        } catch {}
+        this.recognition = null;
+      }
+
       this.recognition = new SpeechRecognition();
-      this.recognition.continuous = true;
+      // On mobile devices (iOS Safari and Android WebKit), continuous=false prevents silent aborts and audio lockups
+      this.recognition.continuous = !isMobile;
       this.recognition.interimResults = true;
       this.recognition.lang = this.settings.recognitionLanguage || 'km-KH';
       this.recognition.maxAlternatives = 1;
@@ -227,25 +243,56 @@ class VoiceAssistantService {
       };
 
       this.recognition.onerror = (event: any) => {
-        // 'no-speech' is common and not fatal
-        if (event.error !== 'no-speech') {
-          console.warn('[VoiceAssistant] Recognition error:', event.error);
-          this.notifyError(`Voice recognition: ${event.error}`);
+        const errType = event.error;
+        console.warn('[VoiceAssistant] Speech recognition error event:', errType);
+
+        if (errType === 'no-speech') {
+          this.isListening = false;
+          this.notifyListeningState(false);
+          this.notifyError('មិនបានឮសំឡេងទេ។ សូមចុចមីក្រូហ្វូនម្តងទៀត ឬជ្រើសរើសសកម្មភាពរហ័ស 1-Tap ខាងក្រោម / No voice detected. Tap mic to retry or use 1-Tap shortcuts below.');
+          return;
         }
+
+        // On mobile devices where Khmer recognition is unavailable in device OS, auto-fallback to English
+        if (errType === 'language-not-supported') {
+          console.warn('[VoiceAssistant] Language model not installed on this mobile OS:', this.settings.recognitionLanguage);
+          this.setRecognitionLanguage('en-US');
+          this.isListening = false;
+          this.notifyListeningState(false);
+          this.notifyError('ភាសាខ្មែរមិនត្រូវបានគាំទ្រដោយម៉ាស៊ីនសំឡេងទូរស័ព្ទនេះទេ។ បានប្តូរទៅភាសាអង់គ្លេស / Device OS does not support Khmer speech recognition. Switched to English, or use 1-Tap actions below.');
+          return;
+        }
+
+        if (errType === 'not-allowed') {
+          this.isListening = false;
+          this.notifyListeningState(false);
+          this.notifyError('ការអនុញ្ញាតមីក្រូហ្វូនត្រូវបានបិទ។ សូមបើកសិទ្ធិ Mic នៅក្នុង Browser Settings ឬចុចប៊ូតុង 1-Tap ខាងក្រោម / Microphone permission blocked in browser. Use 1-Tap shortcuts below.');
+          return;
+        }
+
+        if (errType === 'audio-capture') {
+          this.isListening = false;
+          this.notifyListeningState(false);
+          this.notifyError('Microphone hardware unavailable. You can use 1-Tap Quick Commands below.');
+          return;
+        }
+
+        if (errType === 'network') {
+          this.isListening = false;
+          this.notifyListeningState(false);
+          this.notifyError('Speech recognition network temporarily lost. Tap the mic to retry or use 1-Tap Quick Commands.');
+          return;
+        }
+
+        this.isListening = false;
+        this.notifyListeningState(false);
+        this.notifyError(`Voice recognition: ${errType}. Use 1-Tap shortcuts below.`);
       };
 
       this.recognition.onend = () => {
-        // If meant to be listening continuously, restart unless explicitly stopped
-        if (this.isListening) {
-          try {
-            this.recognition.start();
-          } catch {
-            this.isListening = false;
-            this.notifyListeningState(false);
-          }
-        } else {
-          this.notifyListeningState(false);
-        }
+        this.isListening = false;
+        this.notifyListeningState(false);
+        this.stopAudioAnalyser();
       };
     } catch (e) {
       console.error('[VoiceAssistant] Failed to init SpeechRecognition:', e);
@@ -334,17 +381,18 @@ class VoiceAssistantService {
   public async startListening(): Promise<boolean> {
     if (this.isListening) return true;
 
-    if (!this.recognition) {
-      this.initSpeechRecognition();
-    }
+    // Always re-initialize recognition instance to prevent stale WebKit state on mobile iOS/Android
+    this.initSpeechRecognition();
 
     if (!this.recognition) {
-      this.notifyError('Speech recognition is not supported in this browser. You can test commands in the Voice Sandbox or manual command input.');
+      this.notifyError('កម្មវិធីរុករកនេះមិនគាំទ្រ Voice API ទេ។ សូមប្រើប្រាស់ប៊ូតុងសកម្មភាពរហ័ស 1-Tap ឬវាយពាក្យបញ្ជា / Web Speech API not supported on this browser. Please use 1-Tap shortcuts or type commands.');
       return false;
     }
 
     try {
       this.isListening = true;
+      this.notifyListeningState(true);
+
       if (this.recognition) {
         this.recognition.lang = this.settings.recognitionLanguage || 'km-KH';
       }
@@ -362,7 +410,7 @@ class VoiceAssistantService {
       console.warn('[VoiceAssistant] Start listening failed:', err);
       this.isListening = false;
       this.notifyListeningState(false);
-      this.notifyError(err.message || 'Failed to start microphone. Please check browser permissions.');
+      this.notifyError('មិនអាចបើកមីក្រូហ្វូនបានទេ។ សូមចុចម្តងទៀត ឬប្រើប៊ូតុង 1-Tap ខាងក្រោម / Unable to start microphone. Please tap again or use 1-Tap shortcuts below.');
       return false;
     }
   }
@@ -600,8 +648,27 @@ class VoiceAssistantService {
 
     // C. UPDATE ACTIVITY / TASK
     // 1. Mark as completed or specific status
-    // English: "mark activity/task ACT-001 as completed", "update task ACT-001 to in progress", "complete task ACT-001"
-    // Khmer: "សម្គាល់សកម្មភាព ACT-001 ថាបានបញ្ចប់", "កែប្រែកិច្ចការ ACT-001 ទៅជា បានបញ្ចប់", "បញ្ចប់កិច្ចការ ACT-001"
+    // English: "mark activity/task ACT-001 as completed", "update task ACT-001 to in progress", "complete task ACT-001", "done", "complete task"
+    // Khmer: "សម្គាល់សកម្មភាព ACT-001 ថាបានបញ្ចប់", "កែប្រែកិច្ចការ ACT-001 ទៅជា បានបញ្ចប់", "បញ្ចប់កិច្ចការ ACT-001", "បញ្ចប់កិច្ចការ", "ធ្វើចប់"
+    if (
+      clean === 'complete task' || 
+      clean === 'finish task' || 
+      clean === 'task done' || 
+      clean === 'done' || 
+      clean === 'mark as completed' || 
+      clean === 'បញ្ចប់កិច្ចការ' || 
+      clean === 'ធ្វើចប់' || 
+      clean === 'ចប់' ||
+      clean === 'បានបញ្ចប់'
+    ) {
+      return {
+        intent: 'UPDATE_ACTIVITY',
+        status: 'Completed',
+        progressPercentage: 100,
+        rawTranscript: text
+      };
+    }
+
     const engMarkActRegex = /(?:mark|set|update)\s+(?:the\s+)?(?:activity|task|subtask)\s*(?:code|number)?\s*([a-z0-9\-\s]+?)\s+(?:as|to)\s+(completed|done|finished|in progress|ongoing|on hold|paused|blocked|stuck|not started|pending)/i;
     const engDirectCompleteRegex = /(?:complete|finish|done)\s+(?:the\s+)?(?:activity|task|subtask)\s*(?:code|number)?\s*([a-z0-9\-\s]+)/i;
     const khmerMarkActRegex = /(?:សម្គាល់|កំណត់|កែប្រែ|ផ្លាស់ប្តូរ)(?:\s*នូវ)?(?:\s*សកម្មភាព|\s*កិច្ចការ|\s*ភារកិច្ច)\s*(?:កូដ|លេខ|ឈ្មោះ)?\s*(.+?)\s*(?:ថា|ជា|ទៅជា|ទៅ)\s*(បានបញ្ចប់|បញ្ចប់|កំពុងដំណើរការ|ដំណើរការ|ផ្អាក|ផ្អាកបណ្តោះអាសន្ន|ជាប់គាំង|រាំងស្ទះ|មិនទាន់ចាប់ផ្តើម|រង់ចាំ)/i;
@@ -936,7 +1003,137 @@ class VoiceAssistantService {
       };
     }
 
-    // 6. HELP / COMMANDS
+    // 6. EMPLOYEE FAST WORK ACTIONS
+    // A. MY TASKS & ACTIVITIES
+    if (
+      clean.includes('my task') || 
+      clean.includes('my tasks') || 
+      clean.includes('what are my tasks') || 
+      clean.includes('show my tasks') || 
+      clean.includes('my activities') ||
+      clean.includes('tasks for me') ||
+      clean.includes('tasks assigned to me') ||
+      clean.includes('កិច្ចការរបស់ខ្ញុំ') || 
+      clean.includes('ភារកិច្ចរបស់ខ្ញុំ') || 
+      clean.includes('កិច្ចការខ្ញុំ') || 
+      clean.includes('ភារកិច្ចខ្ញុំ') ||
+      clean.includes('តើខ្ញុំមានកិច្ចការអ្វីខ្លះ')
+    ) {
+      return {
+        intent: 'MY_TASKS',
+        rawTranscript: text
+      };
+    }
+
+    // B. MY ATTENDANCE & SHIFT STATUS
+    if (
+      clean.includes('check attendance') || 
+      clean.includes('my attendance') || 
+      clean.includes('attendance status') || 
+      clean.includes('did i clock in') || 
+      clean.includes('check shift') || 
+      clean.includes('shift status') || 
+      clean.includes('attendance today') ||
+      clean.includes('វត្តមានថ្ងៃនេះ') || 
+      clean.includes('វត្តមានរបស់ខ្ញុំ') || 
+      clean.includes('ស្ថានភាពវត្តមាន') || 
+      clean.includes('វត្តមានខ្ញុំ') ||
+      clean.includes('តើខ្ញុំចុះវត្តមានហើយឬនៅ')
+    ) {
+      return {
+        intent: 'MY_ATTENDANCE',
+        rawTranscript: text
+      };
+    }
+
+    // C. CLOCK IN (Morning or Evening Shift)
+    if (
+      clean === 'clock in' || 
+      clean === 'check in' || 
+      clean.startsWith('clock in') || 
+      clean.startsWith('check in') || 
+      clean.includes('clock in now') || 
+      clean.includes('check in today') ||
+      clean.includes('ចុះវត្តមានចូល') || 
+      clean.includes('ចូលធ្វើការ') || 
+      clean.includes('កត់ត្រាចូល') ||
+      clean.includes('ចូលវេន')
+    ) {
+      return {
+        intent: 'CLOCK_IN',
+        rawTranscript: text
+      };
+    }
+
+    // D. CLOCK OUT
+    if (
+      clean === 'clock out' || 
+      clean === 'check out' || 
+      clean.startsWith('clock out') || 
+      clean.startsWith('check out') || 
+      clean.includes('clock out now') || 
+      clean.includes('ចុះវត្តមានចេញ') || 
+      clean.includes('ចេញពីធ្វើការ') || 
+      clean.includes('កត់ត្រាចេញ') ||
+      clean.includes('ចេញពីវេន')
+    ) {
+      return {
+        intent: 'CLOCK_OUT',
+        rawTranscript: text
+      };
+    }
+
+    // E. MY ACTION PLANS
+    if (
+      clean.includes('my plan') || 
+      clean.includes('my plans') || 
+      clean.includes('my action plans') || 
+      clean.includes('what are my plans') || 
+      clean.includes('show my plans') ||
+      clean.includes('ផែនការរបស់ខ្ញុំ') || 
+      clean.includes('ផែនការខ្ញុំ') || 
+      clean.includes('តើខ្ញុំមានផែនការអ្វីខ្លះ')
+    ) {
+      return {
+        intent: 'MY_PLANS',
+        rawTranscript: text
+      };
+    }
+
+    // F. MY SALES TARGET & QUOTA
+    if (
+      clean.includes('sales target') || 
+      clean.includes('sale target') || 
+      clean.includes('my target') || 
+      clean.includes('my quota') || 
+      clean.includes('sales quota') ||
+      clean.includes('គោលដៅលក់') || 
+      clean.includes('គោលដៅរបស់ខ្ញុំ') || 
+      clean.includes('ការលក់របស់ខ្ញុំ')
+    ) {
+      return {
+        intent: 'MY_SALES_TARGET',
+        rawTranscript: text
+      };
+    }
+
+    // G. MY COMMISSIONS
+    if (
+      clean.includes('my commission') || 
+      clean.includes('my commissions') || 
+      clean.includes('commission payout') || 
+      clean.includes('check commission') ||
+      clean.includes('កម្រៃជើងសារ') || 
+      clean.includes('កម្រៃជើងសាររបស់ខ្ញុំ') || 
+      clean.includes('ប្រាក់កម្រៃ')
+    ) {
+      return {
+        intent: 'MY_COMMISSIONS',
+        rawTranscript: text
+      };
+    }
+
+    // 7. HELP / COMMANDS
     if (
       clean.includes('help') || 
       clean.includes('what can i say') || 
@@ -1403,7 +1600,16 @@ class VoiceAssistantService {
     // B. UPDATE ACTIVITY / TASK
     if (command.intent === 'UPDATE_ACTIVITY') {
       const activities = db.getActivities();
-      const activity = this.findMatchingActivity(command.activityCode || command.activityTitle || '', activities);
+      let activity = this.findMatchingActivity(command.activityCode || command.activityTitle || '', activities);
+
+      // Smart Employee Fallback: If no specific task code or title was spoken (e.g. employee simply said "Complete task" or "Done"),
+      // automatically target their currently active or in-progress assigned task!
+      if (!activity) {
+        activity = activities.find(a => 
+          (a.assignedEmployeeId === currentUser.id || a.teamLeaderId === currentUser.id) && 
+          a.status !== 'Completed'
+        );
+      }
 
       if (!activity) {
         const spoken = isKhmer 
@@ -2055,7 +2261,250 @@ class VoiceAssistantService {
       };
     }
 
-    // 6. HELP
+    // 6. EMPLOYEE FAST WORK ACTIONS EXECUTION
+    // A. MY TASKS & ACTIVITIES
+    if (command.intent === 'MY_TASKS') {
+      const allActivities = db.getActivities();
+      const myActivities = allActivities.filter(a => 
+        a.assignedEmployeeId === currentUser.id || 
+        a.teamLeaderId === currentUser.id
+      );
+
+      if (myActivities.length === 0) {
+        const spoken = isKhmer 
+          ? `លោក/អ្នក ${currentUser.name} មិនទាន់មានកិច្ចការត្រូវបានចាត់តាំងដោយផ្ទាល់នៅឡើយទេ។`
+          : `Hello ${currentUser.name}, you do not have any tasks directly assigned to you at the moment.`;
+        this.speak(spoken);
+        return {
+          success: true,
+          intent: 'MY_TASKS',
+          spokenFeedback: spoken,
+          displayMessage: spoken,
+          timestamp
+        };
+      }
+
+      const completed = myActivities.filter(a => a.status === 'Completed').length;
+      const inProgress = myActivities.filter(a => a.status === 'In Progress').length;
+      const pending = myActivities.length - completed - inProgress;
+
+      const topTask = myActivities.find(a => a.status !== 'Completed') || myActivities[0];
+      const spoken = isKhmer 
+        ? `អ្នកមានកិច្ចការសរុប ${myActivities.length}៖ បានបញ្ចប់ ${completed} និងកំពុងដំណើរការ ${inProgress}។ កិច្ចការចម្បង៖ ${topTask.title} វឌ្ឍនភាព ${topTask.progressPercentage}%។`
+        : `You have ${myActivities.length} assigned tasks: ${completed} completed, ${inProgress} in progress. Primary task: "${topTask.title}" at ${topTask.progressPercentage}% completion.`;
+      
+      this.speak(spoken);
+      this.logSession(currentUser, command.rawTranscript, 'MY_TASKS', true, spoken, undefined, undefined, topTask.id, topTask.code, topTask.title);
+
+      return {
+        success: true,
+        intent: 'MY_TASKS',
+        spokenFeedback: spoken,
+        displayMessage: isKhmer 
+          ? `កិច្ចការរបស់អ្នក (${myActivities.length})៖ បានបញ្ចប់ ${completed} • កំពុងធ្វើ ${inProgress} • កំពុងរង់ចាំ ${pending}`
+          : `Your Assigned Tasks (${myActivities.length}): ${completed} completed • ${inProgress} in progress • ${pending} pending`,
+        activityId: topTask.id,
+        activityCode: topTask.code,
+        activityTitle: topTask.title,
+        timestamp
+      };
+    }
+
+    // B. MY ATTENDANCE & SHIFT STATUS
+    if (command.intent === 'MY_ATTENDANCE') {
+      const shiftStatus = db.getTodayShiftStatus(currentUser.id);
+      let statusDesc = '';
+
+      if (shiftStatus.bothCompleted) {
+        statusDesc = isKhmer 
+          ? `បានបញ្ចប់ទាំង ២ វេនដោយជោគជ័យ (សរុប ${shiftStatus.totalHours} ម៉ោង)។`
+          : `both Morning and Evening shifts are completed today (Total: ${shiftStatus.totalHours} hours).`;
+      } else if (shiftStatus.morningCompleted) {
+        statusDesc = isKhmer 
+          ? `វេនព្រឹកបានបញ្ចប់។ រង់ចាំកត់ត្រាវេនល្ងាច (១៣:០០ - ១៧:០០)។`
+          : `Morning shift completed. Evening shift pending check-in (13:00 - 17:00).`;
+      } else if (shiftStatus.hasMorningIn) {
+        statusDesc = isKhmer 
+          ? `កំពុងបំពេញការងារវេនព្រឹក (ម៉ោងចូល ${shiftStatus.morningRecord?.checkInTime})។`
+          : `Morning shift currently in progress (clocked in at ${shiftStatus.morningRecord?.checkInTime}).`;
+      } else {
+        statusDesc = isKhmer 
+          ? `មិនទាន់បានកត់ត្រាវត្តមានសម្រាប់វេនព្រឹកនៅឡើយទេ។`
+          : `you have not checked in for today's morning shift yet.`;
+      }
+
+      const spoken = isKhmer 
+        ? `ស្ថានភាពវត្តមានថ្ងៃនេះសម្រាប់ ${currentUser.name}៖ ${statusDesc}`
+        : `Today's attendance for ${currentUser.name}: ${statusDesc}`;
+
+      this.speak(spoken);
+      this.logSession(currentUser, command.rawTranscript, 'MY_ATTENDANCE', true, spoken);
+
+      return {
+        success: true,
+        intent: 'MY_ATTENDANCE',
+        spokenFeedback: spoken,
+        displayMessage: spoken,
+        timestamp
+      };
+    }
+
+    // C. CLOCK IN
+    if (command.intent === 'CLOCK_IN') {
+      const shiftStatus = db.getTodayShiftStatus(currentUser.id);
+      const targetShift: ShiftType = shiftStatus.morningCompleted ? 'Evening' : 'Morning';
+      const res = db.checkIn(currentUser.id, 'Voice Assistant check-in', 'HQ Workplace', targetShift);
+
+      const spoken = isKhmer 
+        ? (res.success 
+            ? `បានកត់ត្រាវត្តមានចូលធ្វើការវេន${targetShift === 'Morning' ? 'ព្រឹក' : 'ល្ងាច'}ដោយជោគជ័យសម្រាប់ ${currentUser.name}។` 
+            : `មិនអាចកត់ត្រាចូលបានទេ៖ ${res.message}`)
+        : (res.success 
+            ? `Successfully clocked in to ${targetShift} Shift for ${currentUser.name}. Have a great shift!` 
+            : `Clock in could not be completed: ${res.message}`);
+
+      this.speak(spoken);
+      this.logSession(currentUser, command.rawTranscript, 'CLOCK_IN', res.success, spoken);
+
+      return {
+        success: res.success,
+        intent: 'CLOCK_IN',
+        spokenFeedback: spoken,
+        displayMessage: spoken,
+        timestamp
+      };
+    }
+
+    // D. CLOCK OUT
+    if (command.intent === 'CLOCK_OUT') {
+      const shiftStatus = db.getTodayShiftStatus(currentUser.id);
+      const targetShift: ShiftType = (shiftStatus.hasMorningIn && !shiftStatus.hasMorningOut) ? 'Morning' : 'Evening';
+      const res = db.checkOut(currentUser.id, 'Voice Assistant check-out', targetShift);
+
+      const spoken = isKhmer 
+        ? (res.success 
+            ? `បានកត់ត្រាចេញពីធ្វើការវេន${targetShift === 'Morning' ? 'ព្រឹក' : 'ល្ងាច'}ដោយជោគជ័យ។` 
+            : `មិនអាចកត់ត្រាចេញបានទេ៖ ${res.message}`)
+        : (res.success 
+            ? `Successfully clocked out of ${targetShift} Shift for ${currentUser.name}.` 
+            : `Clock out could not be completed: ${res.message}`);
+
+      this.speak(spoken);
+      this.logSession(currentUser, command.rawTranscript, 'CLOCK_OUT', res.success, spoken);
+
+      return {
+        success: res.success,
+        intent: 'CLOCK_OUT',
+        spokenFeedback: spoken,
+        displayMessage: spoken,
+        timestamp
+      };
+    }
+
+    // E. MY PLANS
+    if (command.intent === 'MY_PLANS') {
+      const myPlans = plans.filter(p => !p.isArchived && (p.ownerId === currentUser.id || p.departmentId === currentUser.departmentId));
+      if (myPlans.length === 0) {
+        const spoken = isKhmer 
+          ? `មិនមានផែនការសកម្មភាពដែលលោក/អ្នក ${currentUser.name} កាន់កាប់នៅឡើយទេ។`
+          : `You do not have any action plans assigned or owned under your account.`;
+        this.speak(spoken);
+        return {
+          success: true,
+          intent: 'MY_PLANS',
+          spokenFeedback: spoken,
+          displayMessage: spoken,
+          timestamp
+        };
+      }
+
+      const top = myPlans[0];
+      const spoken = isKhmer 
+        ? `អ្នកមានផែនការសកម្មភាពសរុប ${myPlans.length}។ ផែនការចម្បង៖ ${top.planNumber} ${top.title} វឌ្ឍនភាព ${top.completionPercentage}%។`
+        : `You are associated with ${myPlans.length} action plans. Leading plan: ${top.planNumber} "${top.title}" at ${top.completionPercentage}% completion.`;
+
+      this.speak(spoken);
+      this.logSession(currentUser, command.rawTranscript, 'MY_PLANS', true, spoken, top.id, top.title);
+
+      return {
+        success: true,
+        intent: 'MY_PLANS',
+        spokenFeedback: spoken,
+        displayMessage: isKhmer 
+          ? `ផែនការសកម្មភាពរបស់អ្នក (${myPlans.length})៖ ${top.planNumber} «${top.title}» (${top.completionPercentage}%)`
+          : `Your Action Plans (${myPlans.length}): ${top.planNumber} "${top.title}" (${top.completionPercentage}%)`,
+        planId: top.id,
+        planTitle: top.title,
+        planNumber: top.planNumber,
+        timestamp
+      };
+    }
+
+    // F. MY SALES TARGET & QUOTA
+    if (command.intent === 'MY_SALES_TARGET') {
+      const targets = db.getSalesTargetsByEmployee(currentUser.id);
+      if (targets.length === 0) {
+        const spoken = isKhmer
+          ? `បច្ចុប្បន្នមិនទាន់មានគោលដៅលក់ដែលបានកំណត់សម្រាប់លោក/អ្នក ${currentUser.name} នោះទេ។`
+          : `There is currently no real-estate sales quota assigned to your profile.`;
+        this.speak(spoken);
+        return {
+          success: true,
+          intent: 'MY_SALES_TARGET',
+          spokenFeedback: spoken,
+          displayMessage: spoken,
+          timestamp
+        };
+      }
+
+      const currentTarget = targets[0];
+      const pct = Math.round((currentTarget.achievedVolumeUSD / currentTarget.targetVolumeUSD) * 100);
+      const spoken = isKhmer
+        ? `គោលដៅលក់របស់អ្នកសម្រាប់ ${currentTarget.period} គឺ ${currentTarget.targetVolumeUSD.toLocaleString()} ដុល្លារ។ អ្នកសម្រេចបាន ${currentTarget.achievedVolumeUSD.toLocaleString()} ដុល្លារ ស្មើនឹង ${pct}% នៃគោលដៅ។`
+        : `Your sales target for ${currentTarget.period} is $${currentTarget.targetVolumeUSD.toLocaleString()}. You have achieved $${currentTarget.achievedVolumeUSD.toLocaleString()} (${pct}% quota, ${currentTarget.achievedUnits}/${currentTarget.targetUnits} units). Status: ${currentTarget.status}.`;
+
+      this.speak(spoken);
+      this.logSession(currentUser, command.rawTranscript, 'MY_SALES_TARGET', true, spoken);
+
+      return {
+        success: true,
+        intent: 'MY_SALES_TARGET',
+        spokenFeedback: spoken,
+        displayMessage: isKhmer
+          ? `🎯 គោលដៅលក់ (${currentTarget.period})៖ សម្រេចបាន $${currentTarget.achievedVolumeUSD.toLocaleString()} / $${currentTarget.targetVolumeUSD.toLocaleString()} (${pct}%) • ${currentTarget.status}`
+          : `🎯 Sales Quota (${currentTarget.period}): Achieved $${currentTarget.achievedVolumeUSD.toLocaleString()} / $${currentTarget.targetVolumeUSD.toLocaleString()} (${pct}%) • ${currentTarget.status}`,
+        timestamp
+      };
+    }
+
+    // G. MY COMMISSIONS
+    if (command.intent === 'MY_COMMISSIONS') {
+      const deals = db.getRealEstateDealsByAgent(currentUser.id);
+      const approvedDeals = deals.filter(d => d.commissionPayoutStatus === 'Approved' || d.commissionPayoutStatus === 'Paid Out');
+      const pendingDeals = deals.filter(d => d.commissionPayoutStatus === 'Pending Approval' || d.commissionPayoutStatus === 'Pending Contract');
+
+      const approvedUSD = approvedDeals.reduce((sum, d) => sum + d.agentCommissionUSD, 0);
+      const pendingUSD = pendingDeals.reduce((sum, d) => sum + d.agentCommissionUSD, 0);
+
+      const spoken = isKhmer
+        ? `កម្រៃជើងសារដែលបានអនុម័ត និងទូទាត់រួចគឺ ${approvedUSD.toLocaleString()} ដុល្លារ។ កំពុងរង់ចាំអនុម័ត ${pendingUSD.toLocaleString()} ដុល្លារ។`
+        : `Your approved commissions total $${approvedUSD.toLocaleString()}. Pending approval: $${pendingUSD.toLocaleString()}.`;
+
+      this.speak(spoken);
+      this.logSession(currentUser, command.rawTranscript, 'MY_COMMISSIONS', true, spoken);
+
+      return {
+        success: true,
+        intent: 'MY_COMMISSIONS',
+        spokenFeedback: spoken,
+        displayMessage: isKhmer
+          ? `💰 កម្រៃជើងសារអចលនទ្រព្យ៖ អនុម័ត $${approvedUSD.toLocaleString()} | រង់ចាំ $${pendingUSD.toLocaleString()} (សរុប ${deals.length} កិច្ចសន្យា)`
+          : `💰 Commission Status: Approved $${approvedUSD.toLocaleString()} | Pending $${pendingUSD.toLocaleString()} (${deals.length} total deals)`,
+        timestamp
+      };
+    }
+
+    // 7. HELP
     if (command.intent === 'HELP') {
       const spokenFeedback = isKhmer 
         ? "អ្នកអាចនិយាយថា៖ បង្កើតផែនការថ្មីឈ្មោះ... ឬ កែប្រែផែនការ... ឬ លុបផែនការ...។ អ្នកក៏អាចសួររកស្ថានភាពផែនការណាមួយផងដែរ។"

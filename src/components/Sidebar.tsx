@@ -26,6 +26,7 @@ import {
   Phone,
   HelpCircle,
   Wrench,
+  BadgeDollarSign,
 } from 'lucide-react';
 import { Language, User, NavTab } from '../types';
 import { translations } from '../services/i18n';
@@ -104,6 +105,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'activities', label: t.activities, icon: CheckSquare },
     { id: 'progress', label: t.progressTracking, icon: TrendingUp },
     { id: 'approvals', label: t.approvalWorkflow, icon: GitPullRequest, badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : undefined, badgeColor: 'bg-amber-500 text-white' },
+    { 
+      id: 'real-estate', 
+      label: lang === 'km' ? 'ការលក់អចលនទ្រព្យ & កម្រៃ' : 'Real Estate Sales & Quota', 
+      icon: BadgeDollarSign,
+      badge: 'Sales',
+      badgeColor: 'bg-emerald-600 text-white'
+    },
     { id: 'objectives', label: t.objectives, icon: Target },
     { id: 'calendar-gantt', label: t.calendarGantt, icon: Calendar },
     { id: 'reports', label: t.reports, icon: FileSpreadsheet },

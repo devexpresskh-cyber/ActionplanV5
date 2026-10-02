@@ -13,7 +13,8 @@ import {
   HelpCircle,
   CheckCircle2,
   Calendar,
-  CheckSquare
+  CheckSquare,
+  Mic
 } from 'lucide-react';
 import { User, Language, NavTab } from './types';
 import { db } from './services/db';
@@ -30,6 +31,7 @@ import { DepartmentsEmployeesView } from './components/DepartmentsEmployeesView'
 import { ObjectivesView } from './components/ObjectivesView';
 import { AuditLogsView } from './components/AuditLogsView';
 import { AttendanceView } from './components/AttendanceView';
+import { RealEstateSalesView } from './components/RealEstateSalesView';
 import { AuthPortal } from './components/AuthPortal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
@@ -339,6 +341,14 @@ export default function App() {
                 />
               )}
 
+              {currentTab === 'real-estate' && (
+                <RealEstateSalesView
+                  currentUser={currentUser}
+                  lang={lang}
+                  onNavigateTab={setCurrentTab}
+                />
+              )}
+
               {currentTab === 'objectives' && (
                 <ObjectivesView
                   currentUser={currentUser}
@@ -444,18 +454,15 @@ export default function App() {
           </button>
         )}
 
-        {/* Center Floating Quick Action Button */}
+        {/* Center Floating Voice AI Action Button */}
         <button
           type="button"
-          onClick={() => {
-            setQuickRequestType('task_update');
-            setIsQuickRequestModalOpen(true);
-          }}
-          className="-mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 hover:scale-105 active:scale-95 transition flex items-center justify-center border-2 border-white focus:outline-hidden"
-          title="Quick Action"
-          aria-label="Quick Action"
+          onClick={() => setIsVoiceAssistantOpen(true)}
+          className="-mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/40 hover:scale-105 active:scale-95 transition flex items-center justify-center border-2 border-white focus:outline-hidden ring-4 ring-indigo-50"
+          title={lang === 'km' ? 'ជំនួយការសំឡេង AI' : 'Voice AI Assistant'}
+          aria-label="Open Voice AI Assistant"
         >
-          <Plus className="w-5 h-5 stroke-[2.5]" />
+          <Mic className="w-5 h-5 stroke-[2.2]" />
         </button>
 
         {canRoleAccessTab(currentUser.role, 'action-plans') ? (
@@ -467,7 +474,7 @@ export default function App() {
             }`}
           >
             <Layers className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5 font-medium leading-none">Plans</span>
+            <span className="text-[10px] mt-0.5 font-medium leading-none">{lang === 'km' ? 'ផែនការ' : 'Plans'}</span>
           </button>
         ) : canRoleAccessTab(currentUser.role, 'activities') ? (
           <button
@@ -478,7 +485,7 @@ export default function App() {
             }`}
           >
             <CheckSquare className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5 font-medium leading-none">Tasks</span>
+            <span className="text-[10px] mt-0.5 font-medium leading-none">{lang === 'km' ? 'កិច្ចការ' : 'Tasks'}</span>
           </button>
         ) : (
           <button
@@ -489,7 +496,7 @@ export default function App() {
             }`}
           >
             <Calendar className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5 font-medium leading-none">Calendar</span>
+            <span className="text-[10px] mt-0.5 font-medium leading-none">{lang === 'km' ? 'ប្រតិទិន' : 'Calendar'}</span>
           </button>
         )}
 
@@ -501,7 +508,7 @@ export default function App() {
           }`}
         >
           <Menu className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-none">Menu</span>
+          <span className="text-[10px] mt-0.5 font-medium leading-none">{lang === 'km' ? 'ម៉ឺនុយ' : 'Menu'}</span>
         </button>
       </nav>
 
@@ -583,6 +590,7 @@ export default function App() {
           handleSafeTabChange('action-plans', 'Voice Assistant Plan Link');
           handleNavigatePlan(planId);
         }}
+        onNavigateTab={tab => handleSafeTabChange(tab, 'Voice Assistant Nav Link')}
       />
 
       {/* Web Push Attendance Alerts Modal */}

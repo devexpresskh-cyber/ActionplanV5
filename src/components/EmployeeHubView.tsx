@@ -37,6 +37,7 @@ import {
   Network,
   QrCode,
   Zap,
+  BadgeDollarSign,
 } from 'lucide-react';
 import { User, Language, ActionPlan, Activity, AttendanceRecord } from '../types';
 import { translations } from '../services/i18n';
@@ -370,6 +371,33 @@ export const EmployeeHubView: React.FC<EmployeeHubViewProps> = ({
           </span>
         </button>
       </div>
+
+      {/* Voice Assistant Quick Launch Card - 1-Tap Access for Employees */}
+      {onOpenVoiceAssistant && (
+        <div className="bg-gradient-to-r from-indigo-900/90 via-blue-900/90 to-slate-900/90 rounded-xl p-2.5 sm:p-3 text-white flex items-center justify-between gap-2.5 shadow-xs border border-indigo-700/50">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
+              <Mic className="w-4 h-4 text-indigo-200" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold truncate text-white">
+                {lang === 'km' ? 'ជំនួយការសំឡេង AI សម្រាប់បុគ្គលិក' : 'Employee Voice Action Assistant'}
+              </div>
+              <p className="text-[10px] text-blue-200 truncate">
+                {lang === 'km' ? 'ចុចនិយាយ ឬជ្រើសរើស 1-Tap ដើម្បីពិនិត្យកិច្ចការ និងវត្តមាន' : 'Speak or tap 1-tap shortcuts for tasks, plans & shifts'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenVoiceAssistant}
+            className="px-2.5 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold transition flex items-center space-x-1 shrink-0 active:scale-95 shadow-2xs"
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span>{lang === 'km' ? 'បើក Voice AI' : 'Open Voice AI'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Primary Shift Punch-In / Punch-Out Card - Compact Mobile-App Design */}
       {(hubViewMode === 'all' || hubViewMode === 'shifts') && (

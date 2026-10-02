@@ -26,7 +26,13 @@ import {
   Check, 
   ChevronRight,
   Info,
-  Globe
+  Globe,
+  CheckSquare,
+  Clock,
+  Zap,
+  Plus,
+  Target,
+  BadgeDollarSign
 } from 'lucide-react';
 import { User, Language, VoiceCommandExecutionResult, VoiceSessionHistoryItem, PlanStatus } from '../types';
 import { voiceAssistant, VoiceSettings, SpeechRecognitionLanguage, isKhmerText } from '../services/voiceAssistant';
@@ -39,6 +45,7 @@ interface VoiceAssistantModalProps {
   lang: Language;
   onPlanMutated?: () => void;
   onNavigatePlan?: (planId: string) => void;
+  onNavigateTab?: (tab: any) => void;
 }
 
 export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
@@ -48,6 +55,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
   lang,
   onPlanMutated,
   onNavigatePlan,
+  onNavigateTab,
 }) => {
   // Navigation tabs within assistant
   const [activeTab, setActiveTab] = useState<'assistant' | 'commands' | 'training' | 'sandbox' | 'history'>('assistant');
@@ -427,8 +435,8 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           </div>
         </div>
 
-        {/* Tab Navigation - Smooth Horizontal Scroll on Mobile */}
-        <div className="flex items-center border-b border-slate-200 bg-slate-50/90 px-2 sm:px-4 text-xs font-semibold overflow-x-auto no-scrollbar shrink-0 gap-0.5">
+        {/* Tab Navigation - Clean & Accessible */}
+        <div className="flex items-center border-b border-slate-200 bg-slate-50/90 px-2 sm:px-4 text-xs font-semibold overflow-x-auto no-scrollbar shrink-0 gap-1">
           <button
             onClick={() => setActiveTab('assistant')}
             className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
@@ -437,8 +445,8 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Mic className="w-3.5 h-3.5" />
-            <span>Voice Console</span>
+            <Mic className="w-3.5 h-3.5 text-blue-600" />
+            <span>{lang === 'km' ? 'ជំនួយការ & កិច្ចការ' : 'Voice Assistant & Work'}</span>
           </button>
 
           <button
@@ -449,13 +457,26 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Commands</span>
+            <BookOpen className="w-3.5 h-3.5 text-slate-500" />
+            <span>{lang === 'km' ? 'ពាក្យបញ្ជា' : 'Commands'}</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('training')}
+            onClick={() => setActiveTab('history')}
             className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
+              activeTab === 'history'
+                ? 'border-blue-600 text-blue-700 bg-white font-bold'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+            <span>{lang === 'km' ? `ប្រវត្តិ (${history.length})` : `History (${history.length})`}</span>
+          </button>
+
+          {/* Desktop-only secondary tabs */}
+          <button
+            onClick={() => setActiveTab('training')}
+            className={`hidden md:flex px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition items-center space-x-1.5 shrink-0 whitespace-nowrap ${
               activeTab === 'training'
                 ? 'border-blue-600 text-blue-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -467,7 +488,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
 
           <button
             onClick={() => setActiveTab('sandbox')}
-            className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
+            className={`hidden md:flex px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition items-center space-x-1.5 shrink-0 whitespace-nowrap ${
               activeTab === 'sandbox'
                 ? 'border-blue-600 text-blue-700 bg-white font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -475,18 +496,6 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
           >
             <FlaskConical className="w-3.5 h-3.5" />
             <span>Sandbox</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`px-3 sm:px-3.5 py-2 sm:py-2.5 border-b-2 transition flex items-center space-x-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === 'history'
-                ? 'border-blue-600 text-blue-700 bg-white font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>History ({history.length})</span>
           </button>
         </div>
 
@@ -598,7 +607,7 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                 </div>
 
                 {/* Real-time Transcription Display */}
-                <div className="mt-5 w-full max-w-lg bg-slate-800/80 rounded-xl p-3.5 border border-slate-700/80 text-left min-h-[60px] flex flex-col justify-center">
+                <div className="mt-4 sm:mt-5 w-full max-w-lg bg-slate-800/80 rounded-xl p-3 sm:p-3.5 border border-slate-700/80 text-left min-h-[56px] sm:min-h-[60px] flex flex-col justify-center">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
                     <span>Live Spoken Transcript</span>
                     {isExecuting && <span className="text-blue-400 animate-pulse">Executing command...</span>}
@@ -621,17 +630,260 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                 </div>
               </div>
 
-              {/* Action Feedback Receipt Card (Point 5 from User Request) */}
+              {/* ⚡ Employee Quick Voice Actions (1-Tap Work Actions) */}
+              <div className="w-full space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-0.5">
+                  <span className="flex items-center space-x-1.5 text-slate-700">
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{lang === 'km' ? 'ពាក្យបញ្ជាសំឡេងរហ័សសម្រាប់បុគ្គលិក (1-Tap Work Actions)' : 'Employee Quick Work Shortcuts (1-Tap)'}</span>
+                  </span>
+                  <span className="text-[10px] text-blue-600 font-medium">1-Tap Fast Run</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {/* 1. My Tasks */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'កិច្ចការរបស់ខ្ញុំ' : 'What are my tasks';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <CheckSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'កិច្ចការខ្ញុំ' : 'My Tasks'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'ពិនិត្យភារកិច្ច' : 'Check assigned tasks'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 2. Clock In */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'ចុះវត្តមានចូល' : 'Clock in';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-amber-50/80 hover:bg-amber-100 border border-amber-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition font-bold">
+                      <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'ចូលវេន ១-Tap' : '1-Tap Clock In'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'ចុះវត្តមានភ្លាមៗ' : 'Record attendance'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 3. Clock Out */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'ចុះវត្តមានចេញ' : 'Clock out';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-rose-50/80 hover:bg-rose-100 border border-rose-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition font-bold">
+                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'ចេញវេន' : 'Clock Out'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'កត់ត្រាចេញ' : 'End working shift'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 4. Shift Attendance Status */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'វត្តមានថ្ងៃនេះ' : 'Check attendance status';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'វត្តមានថ្ងៃនេះ' : 'Shift Status'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'ពិនិត្យវេនធ្វើការ' : 'Hours & punch logs'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 5. Complete Task (100%) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'បញ្ចប់កិច្ចការ' : 'Complete task';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-teal-50/80 hover:bg-teal-100 border border-teal-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'បញ្ចប់កិច្ចការ' : 'Mark Completed'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'វឌ្ឍនភាព ១០០%' : 'Set progress 100%'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 6. Progress 50% */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'កែប្រែវឌ្ឍនភាព 50 ភាគរយ' : 'Set progress to 50 percent';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-violet-50/80 hover:bg-violet-100 border border-violet-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <Sliders className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'វឌ្ឍនភាព 50%' : 'Progress 50%'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'កំពុងដំណើរការ' : 'Set In Progress'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 7. My Plans */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'ផែនការរបស់ខ្ញុំ' : 'What are my plans';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'ផែនការខ្ញុំ' : 'My Plans'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'ផែនការសកម្មភាព' : 'Active action plans'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 8. Create Plan */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'បង្កើតផែនការថ្មីឈ្មោះ ការងារអាទិភាព' : 'Create a new plan titled Strategic Action Plan';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-sky-50/80 hover:bg-sky-100 border border-sky-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'បង្កើតផែនការ' : 'Create Plan'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'បង្កើតថ្មីតាមសំឡេង' : 'New action plan'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 9. Sales Target Quota */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'គោលដៅលក់របស់ខ្ញុំ' : 'Check sales target';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-amber-50/80 hover:bg-amber-100 border border-amber-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'គោលដៅលក់' : 'Sales Quota'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'ពិនិត្យគោលដៅ និងភាគរយ' : 'Target vs Achieved'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 10. My Commissions */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cmd = lang === 'km' ? 'កម្រៃជើងសាររបស់ខ្ញុំ' : 'My commissions';
+                      setFinalTranscript(cmd);
+                      handleExecuteVoiceCommand(cmd);
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200/80 text-left transition flex items-center space-x-2 sm:space-x-2.5 group active:scale-95 shadow-2xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <BadgeDollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {lang === 'km' ? 'កម្រៃជើងសារ' : 'Commissions'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {lang === 'km' ? 'ប្រាក់កម្រៃបានអនុម័ត' : 'Approved payouts'}
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Feedback Receipt Card */}
               {lastExecutionResult && (
-                <div className={`p-4 rounded-xl border transition-all ${
+                <div className={`p-3.5 sm:p-4 rounded-xl border transition-all shadow-xs ${
                   lastExecutionResult.success
                     ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
                     : lastExecutionResult.requiresPin
                     ? 'bg-amber-50/90 border-amber-300 text-amber-950'
                     : 'bg-rose-50/90 border-rose-300 text-rose-950'
                 }`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start space-x-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-start space-x-3 min-w-0 flex-1">
                       <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${
                         lastExecutionResult.success
                           ? 'bg-emerald-600 text-white'
@@ -647,80 +899,155 @@ export const VoiceAssistantModal: React.FC<VoiceAssistantModalProps> = ({
                           <AlertCircle className="w-5 h-5" />
                         )}
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs font-bold uppercase tracking-wider">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
                             {(lastExecutionResult?.intent || 'COMMAND').replace(/_/g, ' ')}
                           </span>
                           <span className="text-[10px] text-slate-500">
                             {new Date(lastExecutionResult.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold mt-0.5">
+                        <h4 className="text-xs sm:text-sm font-bold mt-0.5 text-slate-900 leading-snug">
                           {lastExecutionResult.displayMessage}
                         </h4>
                         <div className="mt-1.5 flex items-center space-x-2 text-xs bg-white/70 p-2 rounded-lg border border-slate-200/80">
-                          <Volume2 className="w-4 h-4 text-blue-600 shrink-0" />
-                          <span className="italic text-slate-700">
+                          <Volume2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span className="italic text-slate-700 text-[11px] sm:text-xs truncate">
                             "{lastExecutionResult.spokenFeedback}"
                           </span>
                           <button
                             onClick={() => voiceAssistant.speak(lastExecutionResult.spokenFeedback)}
                             className="text-[10px] font-bold text-blue-700 hover:underline ml-auto shrink-0"
                           >
-                            Replay Audio
+                            Replay
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* Navigation Link if plan was created/updated */}
-                    {lastExecutionResult.planId && onNavigatePlan && (
-                      <button
-                        onClick={() => {
-                          onNavigatePlan(lastExecutionResult.planId!);
-                          onClose();
-                        }}
-                        className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-800 hover:bg-slate-50 shadow-2xs shrink-0"
-                      >
-                        <span>View Plan</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
-                      </button>
-                    )}
+                    {/* Quick Link Navigation Buttons */}
+                    <div className="flex items-center space-x-2 self-end sm:self-center shrink-0">
+                      {lastExecutionResult.planId && onNavigatePlan && (
+                        <button
+                          onClick={() => {
+                            onNavigatePlan(lastExecutionResult.planId!);
+                            onClose();
+                          }}
+                          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-800 hover:bg-slate-50 shadow-2xs shrink-0"
+                        >
+                          <span>{lang === 'km' ? 'មើលផែនការ' : 'View Plan'}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                      )}
+
+                      {lastExecutionResult.activityId && onNavigateTab && (
+                        <button
+                          onClick={() => {
+                            onNavigateTab('activities');
+                            onClose();
+                          }}
+                          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-800 hover:bg-slate-50 shadow-2xs shrink-0"
+                        >
+                          <span>{lang === 'km' ? 'មើលកិច្ចការ' : 'View Tasks'}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                      )}
+
+                      {(lastExecutionResult.intent === 'CLOCK_IN' || lastExecutionResult.intent === 'CLOCK_OUT' || lastExecutionResult.intent === 'MY_ATTENDANCE') && onNavigateTab && (
+                        <button
+                          onClick={() => {
+                            onNavigateTab('attendance');
+                            onClose();
+                          }}
+                          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-800 hover:bg-slate-50 shadow-2xs shrink-0"
+                        >
+                          <span>{lang === 'km' ? 'មើលវត្តមាន' : 'View Attendance'}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                      )}
+
+                      {(lastExecutionResult.intent === 'MY_SALES_TARGET' || lastExecutionResult.intent === 'MY_COMMISSIONS') && onNavigateTab && (
+                        <button
+                          onClick={() => {
+                            onNavigateTab('real-estate');
+                            onClose();
+                          }}
+                          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 shadow-2xs shrink-0"
+                        >
+                          <span>{lang === 'km' ? 'មើលការលក់ & កម្រៃ' : 'View Sales & Commissions'}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-white" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Manual Command Input (Fallback for noisy environments or muted mics) */}
-              <form onSubmit={handleManualSubmit} className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <div className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                  <span>{isKhmerMode ? 'វាយបញ្ចូលពាក្យបញ្ជាជាសំឡេងដោយផ្ទាល់' : 'Type Voice Command Directly'}</span>
-                  <span className="text-[11px] text-slate-400">
-                    {isKhmerMode ? 'កម្មវិធីវិភាគភាសាខ្មែរ/អង់គ្លេស' : 'Natural Language Parser'}
-                  </span>
+              <div className="space-y-2">
+                <form onSubmit={handleManualSubmit} className="bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-slate-200">
+                  <div className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+                    <span>{isKhmerMode ? 'វាយបញ្ចូលពាក្យបញ្ជាជាសំឡេងដោយផ្ទាល់' : 'Type Voice Command Directly'}</span>
+                    <span className="text-[11px] text-slate-400">
+                      {isKhmerMode ? 'កម្មវិធីវិភាគភាសាខ្មែរ/អង់គ្លេស' : 'Natural Language Parser'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={manualInput}
+                      onChange={e => setManualInput(e.target.value)}
+                      placeholder={
+                        isKhmerMode 
+                          ? 'ឧទាហរណ៍៖ បង្កើតផែនការថ្មីឈ្មោះ... ឬ កិច្ចការរបស់ខ្ញុំ'
+                          : 'e.g. Create a new plan titled Employee Safety... or My tasks'
+                      }
+                      className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!manualInput.trim()}
+                      className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition flex items-center space-x-1 shrink-0"
+                    >
+                      <span>{isKhmerMode ? 'បញ្ជូន' : 'Run'}</span>
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </form>
+
+                {/* Quick Suggestion Chips */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0">Quick:</span>
+                  {(isKhmerMode ? [
+                    'កិច្ចការរបស់ខ្ញុំ',
+                    'ចុះវត្តមានចូល',
+                    'ចុះវត្តមានចេញ',
+                    'វត្តមានថ្ងៃនេះ',
+                    'បញ្ចប់កិច្ចការ',
+                    'ផែនការរបស់ខ្ញុំ'
+                  ] : [
+                    'What are my tasks',
+                    'Clock in',
+                    'Clock out',
+                    'Attendance status',
+                    'Complete task',
+                    'My plans'
+                  ]).map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setFinalTranscript(chip);
+                        handleExecuteVoiceCommand(chip);
+                      }}
+                      className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 text-[11px] font-medium whitespace-nowrap transition active:scale-95"
+                    >
+                      {chip}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={manualInput}
-                    onChange={e => setManualInput(e.target.value)}
-                    placeholder={
-                      isKhmerMode 
-                        ? 'ឧទាហរណ៍៖ បង្កើតផែនការថ្មីឈ្មោះ ការពង្រីកសេវាធនាគារឌីជីថល...'
-                        : 'e.g. Create a new plan titled Employee Safety Protocol...'
-                    }
-                    className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!manualInput.trim()}
-                    className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition flex items-center space-x-1"
-                  >
-                    <span>{isKhmerMode ? 'ប្រតិបត្តិ' : 'Execute'}</span>
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </form>
+              </div>
 
               {/* Quick Spoken Templates */}
               <div>

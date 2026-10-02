@@ -573,12 +573,131 @@ export type NavTab =
   | 'activities'
   | 'progress'
   | 'approvals'
+  | 'real-estate'
   | 'objectives'
   | 'departments'
   | 'employees'
   | 'calendar-gantt'
   | 'reports'
   | 'audit-logs';
+
+// ==========================================
+// REAL ESTATE SALES & COMMISSION MANAGEMENT
+// ==========================================
+
+export type RealEstatePropertyType = 
+  | 'Luxury Villa'
+  | 'Twin Villa'
+  | 'Link Villa'
+  | 'Condominium'
+  | 'Shophouse'
+  | 'Townhouse'
+  | 'Land Plot'
+  | 'Commercial Office';
+
+export type RealEstatePropertyStatus = 
+  | 'Available'
+  | 'Reserved'
+  | 'Under Contract'
+  | 'Sold';
+
+export type RealEstateDealStage = 
+  | 'Inquiry'
+  | 'Site Tour'
+  | 'Booking Deposit'
+  | 'Contract Signed'
+  | 'Down Payment Cleared'
+  | 'Handover / Closed';
+
+export type CommissionPayoutStatus = 
+  | 'Pending Contract'
+  | 'Pending Approval'
+  | 'Approved'
+  | 'Paid Out'
+  | 'Rejected';
+
+export interface RealEstateProperty {
+  id: string;
+  propertyCode: string; // e.g. "VIL-PENG-042"
+  projectName: string; // e.g. "Borey Peng Huoth Grand Star"
+  developer: string; // e.g. "Peng Huoth Group"
+  propertyType: RealEstatePropertyType;
+  unitNumber: string; // e.g. "Villa Queen A-14"
+  title: string;
+  location: string;
+  bedrooms: number;
+  bathrooms: number;
+  sizeSqM: number;
+  landSizeSqM?: number;
+  priceUSD: number;
+  commissionRatePercent: number; // e.g. 3.0
+  status: RealEstatePropertyStatus;
+  imageUrl?: string;
+  assignedAgentId?: string;
+  assignedAgentName?: string;
+  createdAt: string;
+  description?: string;
+}
+
+export interface SalesTarget {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeePosition?: string;
+  employeeAvatar?: string;
+  period: string; // e.g. "Q4 2026", "October 2026"
+  targetVolumeUSD: number; // e.g. 500000
+  targetUnits: number; // e.g. 3
+  achievedVolumeUSD: number;
+  achievedUnits: number;
+  baseCommissionRate: number; // e.g. 3.0%
+  acceleratorBonusRate: number; // e.g. 1.0% when exceeding 100% quota
+  status: 'Active' | 'Achieved' | 'Exceeded' | 'Behind' | 'Closed';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RealEstateDeal {
+  id: string;
+  dealCode: string; // e.g. "DEAL-2026-081"
+  propertyId: string;
+  propertyCode: string;
+  propertyTitle: string;
+  projectName: string;
+  propertyType: RealEstatePropertyType;
+  unitNumber: string;
+  clientName: string;
+  clientPhone: string;
+  clientEmail?: string;
+  agentId: string;
+  agentName: string;
+  salePriceUSD: number;
+  commissionPercentage: number;
+  grossCommissionUSD: number;
+  agentCommissionUSD: number; // Net share to agent
+  agencyCutUSD: number; // Brokerage / Agency share
+  dealDate: string; // YYYY-MM-DD
+  stage: RealEstateDealStage;
+  paymentMethod: 'Full Cash' | 'Bank Loan (70%)' | 'Developer Installment (24-Mo)' | 'Progressive Payment';
+  commissionPayoutStatus: CommissionPayoutStatus;
+  payoutApprovedById?: string;
+  payoutApprovedByName?: string;
+  payoutDate?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommissionTierConfig {
+  id: string;
+  tierName: string;
+  minVolumeUSD: number;
+  maxVolumeUSD: number;
+  commissionRatePercent: number;
+  bonusAmountUSD: number;
+  badgeColor: string;
+}
 
 export interface RolePermissionRule {
   allowedRoles: UserRole[];
@@ -597,6 +716,13 @@ export type VoiceCommandIntent =
   | 'UPDATE_ACTIVITY'
   | 'DELETE_ACTIVITY'
   | 'SEARCH_ACTIVITY'
+  | 'MY_TASKS'
+  | 'MY_ATTENDANCE'
+  | 'MY_PLANS'
+  | 'MY_SALES_TARGET'
+  | 'MY_COMMISSIONS'
+  | 'CLOCK_IN'
+  | 'CLOCK_OUT'
   | 'NAVIGATE'
   | 'HELP'
   | 'AUTHENTICATE'

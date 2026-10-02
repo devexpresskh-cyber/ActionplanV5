@@ -133,6 +133,14 @@ export const MENU_RBAC_POLICY: Record<NavTab, MenuTabRBACRule> = {
     description: 'Multi-stage plan approval, submission review, rejection, and final sign-off.',
     minimumLevel: 4,
   },
+  'real-estate': {
+    tab: 'real-estate',
+    title: 'Real Estate Sales & Commissions',
+    category: 'Operational',
+    allowedRoles: ['Super Admin', 'Administrator', 'Department Manager', 'Team Leader', 'Employee', 'Executive / Viewer'],
+    description: 'Property catalog, sales quotas, deals tracking, and commission payouts.',
+    minimumLevel: 1,
+  },
   'objectives': {
     tab: 'objectives',
     title: 'Organizational Objectives',

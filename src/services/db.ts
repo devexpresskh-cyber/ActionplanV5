@@ -30,9 +30,22 @@ import {
   PriorityLevel,
   TelegramNotificationConfig,
   TelegramNotificationLog,
+  RealEstateProperty,
+  SalesTarget,
+  RealEstateDeal,
+  CommissionTierConfig,
+  RealEstatePropertyStatus,
+  RealEstateDealStage,
+  CommissionPayoutStatus,
 } from '../types';
 import { canRoleAccessTab, MENU_RBAC_POLICY } from './rbac';
 import { defaultTelegramConfig, initialTelegramLogs } from '../data/telegramData';
+import {
+  initialRealEstateProperties,
+  initialSalesTargets,
+  initialRealEstateDeals,
+  initialCommissionTiers,
+} from '../data/realEstateData';
 import {
   initialUsers,
   initialDepartments,
@@ -87,6 +100,10 @@ const STORAGE_KEYS = {
   CURRENT_CONNECTION: 'apms_current_connection_v1',
   TELEGRAM_CONFIG: 'apms_telegram_config_v1',
   TELEGRAM_LOGS: 'apms_telegram_logs_v1',
+  REAL_ESTATE_PROPERTIES: 'apms_re_properties_v1',
+  SALES_TARGETS: 'apms_sales_targets_v1',
+  REAL_ESTATE_DEALS: 'apms_re_deals_v1',
+  COMMISSION_TIERS: 'apms_commission_tiers_v1',
 };
 
 export const DEFAULT_WORK_SHIFTS: Record<string, WorkShiftConfig> = {
@@ -201,6 +218,10 @@ class DatabaseService {
   private currentUserId: string = 'usr-1'; // Default to Super Admin
   private telegramConfig: TelegramNotificationConfig = { ...defaultTelegramConfig };
   private telegramLogs: TelegramNotificationLog[] = [...initialTelegramLogs];
+  private properties: RealEstateProperty[] = [];
+  private salesTargets: SalesTarget[] = [];
+  private deals: RealEstateDeal[] = [];
+  private commissionTiers: CommissionTierConfig[] = [];
 
   constructor() {
     this.loadFromStorage();
@@ -324,6 +345,18 @@ class DatabaseService {
       }
       this.telegramLogs = Array.isArray(parsedTelLogs) ? parsedTelLogs : [...initialTelegramLogs];
 
+      const storedProps = localStorage.getItem(STORAGE_KEYS.REAL_ESTATE_PROPERTIES);
+      this.properties = storedProps ? JSON.parse(storedProps) : [...initialRealEstateProperties];
+
+      const storedTargets = localStorage.getItem(STORAGE_KEYS.SALES_TARGETS);
+      this.salesTargets = storedTargets ? JSON.parse(storedTargets) : [...initialSalesTargets];
+
+      const storedDeals = localStorage.getItem(STORAGE_KEYS.REAL_ESTATE_DEALS);
+      this.deals = storedDeals ? JSON.parse(storedDeals) : [...initialRealEstateDeals];
+
+      const storedTiers = localStorage.getItem(STORAGE_KEYS.COMMISSION_TIERS);
+      this.commissionTiers = storedTiers ? JSON.parse(storedTiers) : [...initialCommissionTiers];
+
       const storedUserId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
       if (storedUserId && this.users.find(u => u.id === storedUserId)) {
         this.currentUserId = storedUserId;
@@ -358,6 +391,10 @@ class DatabaseService {
     this.currentConnection = { ...simulatedConnectionProfiles[0] };
     this.telegramConfig = { ...defaultTelegramConfig };
     this.telegramLogs = [...initialTelegramLogs];
+    this.properties = [...initialRealEstateProperties];
+    this.salesTargets = [...initialSalesTargets];
+    this.deals = [...initialRealEstateDeals];
+    this.commissionTiers = [...initialCommissionTiers];
     this.currentUserId = 'usr-1';
     this.saveAll();
   }
@@ -385,6 +422,10 @@ class DatabaseService {
     localStorage.setItem(STORAGE_KEYS.CURRENT_CONNECTION, JSON.stringify(this.currentConnection));
     localStorage.setItem(STORAGE_KEYS.TELEGRAM_CONFIG, JSON.stringify(this.telegramConfig));
     localStorage.setItem(STORAGE_KEYS.TELEGRAM_LOGS, JSON.stringify(this.telegramLogs));
+    localStorage.setItem(STORAGE_KEYS.REAL_ESTATE_PROPERTIES, JSON.stringify(this.properties));
+    localStorage.setItem(STORAGE_KEYS.SALES_TARGETS, JSON.stringify(this.salesTargets));
+    localStorage.setItem(STORAGE_KEYS.REAL_ESTATE_DEALS, JSON.stringify(this.deals));
+    localStorage.setItem(STORAGE_KEYS.COMMISSION_TIERS, JSON.stringify(this.commissionTiers));
     localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, this.currentUserId);
   }
 
@@ -3221,6 +3262,10 @@ class DatabaseService {
     this.currentConnection = { ...simulatedConnectionProfiles[0] };
     this.telegramConfig = { ...defaultTelegramConfig };
     this.telegramLogs = [...initialTelegramLogs];
+    this.properties = [...initialRealEstateProperties];
+    this.salesTargets = [...initialSalesTargets];
+    this.deals = [...initialRealEstateDeals];
+    this.commissionTiers = [...initialCommissionTiers];
     this.currentUserId = 'usr-1';
     this.setAuthenticated(true);
     this.saveAll();
@@ -3277,6 +3322,369 @@ class DatabaseService {
     if (data.telegramNotificationsEnabled !== undefined) user.telegramNotificationsEnabled = data.telegramNotificationsEnabled;
     this.saveAll();
     return { ...user };
+  }
+
+  // ==========================================
+  // REAL ESTATE PROPERTIES MANAGEMENT
+  // ==========================================
+  public getProperties(): RealEstateProperty[] {
+    return Array.isArray(this.properties) ? [...this.properties] : [];
+  }
+
+  public getPropertyById(id: string): RealEstateProperty | undefined {
+    return this.properties.find(p => p.id === id);
+  }
+
+  public saveProperty(property: RealEstateProperty): RealEstateProperty {
+    const idx = this.properties.findIndex(p => p.id === property.id);
+    if (idx >= 0) {
+      this.properties[idx] = { ...property };
+    } else {
+      this.properties.unshift({ ...property });
+    }
+    this.saveAll();
+    return { ...property };
+  }
+
+  public addProperty(data: Omit<RealEstateProperty, 'id' | 'createdAt'>): RealEstateProperty {
+    const newProperty: RealEstateProperty = {
+      ...data,
+      id: `prop-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      createdAt: new Date().toISOString(),
+    };
+    this.properties.unshift(newProperty);
+    this.saveAll();
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'REAL_ESTATE_PROPERTY_CREATED',
+      'Real Estate Sales',
+      `Registered new property "${newProperty.propertyCode} - ${newProperty.title}" ($${newProperty.priceUSD.toLocaleString()})`
+    );
+    return newProperty;
+  }
+
+  public updateProperty(id: string, updates: Partial<RealEstateProperty>): RealEstateProperty | null {
+    const idx = this.properties.findIndex(p => p.id === id);
+    if (idx === -1) return null;
+    this.properties[idx] = { ...this.properties[idx], ...updates };
+    this.saveAll();
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'REAL_ESTATE_PROPERTY_UPDATED',
+      'Real Estate Sales',
+      `Updated property "${this.properties[idx].propertyCode} - ${this.properties[idx].title}"`
+    );
+    return { ...this.properties[idx] };
+  }
+
+  public deleteProperty(id: string): boolean {
+    const prop = this.properties.find(p => p.id === id);
+    if (!prop) return false;
+    this.properties = this.properties.filter(p => p.id !== id);
+    this.saveAll();
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'REAL_ESTATE_PROPERTY_DELETED',
+      'Real Estate Sales',
+      `Removed property "${prop.propertyCode} - ${prop.title}"`
+    );
+    return true;
+  }
+
+  // ==========================================
+  // EMPLOYEE SALES TARGETS & QUOTAS
+  // ==========================================
+  public getSalesTargets(): SalesTarget[] {
+    return Array.isArray(this.salesTargets) ? [...this.salesTargets] : [];
+  }
+
+  public getSalesTargetById(id: string): SalesTarget | undefined {
+    return this.salesTargets.find(t => t.id === id);
+  }
+
+  public getSalesTargetsByEmployee(employeeId: string): SalesTarget[] {
+    return this.salesTargets.filter(t => t.employeeId === employeeId);
+  }
+
+  public saveSalesTarget(target: SalesTarget): SalesTarget {
+    const idx = this.salesTargets.findIndex(t => t.id === target.id);
+    if (idx >= 0) {
+      this.salesTargets[idx] = { ...target, updatedAt: new Date().toISOString() };
+    } else {
+      this.salesTargets.unshift({ ...target, updatedAt: new Date().toISOString() });
+    }
+    this.saveAll();
+    return { ...this.salesTargets[idx >= 0 ? idx : 0] };
+  }
+
+  public addSalesTarget(data: Omit<SalesTarget, 'id' | 'createdAt' | 'updatedAt'>): SalesTarget {
+    const newTarget: SalesTarget = {
+      ...data,
+      id: `trg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.salesTargets.unshift(newTarget);
+    this.saveAll();
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'SALES_TARGET_ASSIGNED',
+      'Real Estate Sales',
+      `Set sales target of $${newTarget.targetVolumeUSD.toLocaleString()} (${newTarget.targetUnits} units) for ${newTarget.employeeName} (${newTarget.period})`
+    );
+    return newTarget;
+  }
+
+  public updateSalesTarget(id: string, updates: Partial<SalesTarget>): SalesTarget | null {
+    const idx = this.salesTargets.findIndex(t => t.id === id);
+    if (idx === -1) return null;
+    this.salesTargets[idx] = {
+      ...this.salesTargets[idx],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.saveAll();
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'SALES_TARGET_UPDATED',
+      'Real Estate Sales',
+      `Modified sales target for ${this.salesTargets[idx].employeeName} (${this.salesTargets[idx].period})`
+    );
+    return { ...this.salesTargets[idx] };
+  }
+
+  public deleteSalesTarget(id: string): boolean {
+    const target = this.salesTargets.find(t => t.id === id);
+    if (!target) return false;
+    this.salesTargets = this.salesTargets.filter(t => t.id !== id);
+    this.saveAll();
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'SALES_TARGET_DELETED',
+      'Real Estate Sales',
+      `Deleted sales quota for ${target.employeeName} (${target.period})`
+    );
+    return true;
+  }
+
+  public syncSalesTargetWithDeals(employeeId: string): void {
+    const userDeals = this.deals.filter(d => 
+      d.agentId === employeeId && 
+      (d.stage === 'Contract Signed' || d.stage === 'Down Payment Cleared' || d.stage === 'Handover / Closed')
+    );
+    const achievedVol = userDeals.reduce((sum, d) => sum + d.salePriceUSD, 0);
+    const achievedUnits = userDeals.length;
+
+    const targets = this.salesTargets.filter(t => t.employeeId === employeeId && t.status !== 'Closed');
+    targets.forEach(t => {
+      t.achievedVolumeUSD = achievedVol;
+      t.achievedUnits = achievedUnits;
+      if (achievedVol >= t.targetVolumeUSD * 1.05) {
+        t.status = 'Exceeded';
+      } else if (achievedVol >= t.targetVolumeUSD) {
+        t.status = 'Achieved';
+      } else if (achievedVol < t.targetVolumeUSD * 0.5) {
+        t.status = 'Behind';
+      } else {
+        t.status = 'Active';
+      }
+      t.updatedAt = new Date().toISOString();
+    });
+    this.saveAll();
+  }
+
+  // ==========================================
+  // REAL ESTATE DEALS & COMMISSIONS PIPELINE
+  // ==========================================
+  public getRealEstateDeals(): RealEstateDeal[] {
+    return Array.isArray(this.deals) ? [...this.deals] : [];
+  }
+
+  public getRealEstateDealById(id: string): RealEstateDeal | undefined {
+    return this.deals.find(d => d.id === id);
+  }
+
+  public getRealEstateDealsByAgent(agentId: string): RealEstateDeal[] {
+    return this.deals.filter(d => d.agentId === agentId);
+  }
+
+  public addRealEstateDeal(data: Omit<RealEstateDeal, 'id' | 'createdAt' | 'updatedAt' | 'dealCode'>): RealEstateDeal {
+    const timestamp = Date.now();
+    const dealCode = `DEAL-${new Date().getFullYear()}-${String(this.deals.length + 1).padStart(3, '0')}`;
+    const newDeal: RealEstateDeal = {
+      ...data,
+      id: `deal-${timestamp}-${Math.floor(Math.random() * 1000)}`,
+      dealCode,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.deals.unshift(newDeal);
+
+    // If deal is booked or closed, update property status
+    if (newDeal.propertyId) {
+      const propIdx = this.properties.findIndex(p => p.id === newDeal.propertyId);
+      if (propIdx >= 0) {
+        if (newDeal.stage === 'Handover / Closed') {
+          this.properties[propIdx].status = 'Sold';
+        } else if (newDeal.stage === 'Contract Signed' || newDeal.stage === 'Down Payment Cleared') {
+          this.properties[propIdx].status = 'Under Contract';
+        } else if (newDeal.stage === 'Booking Deposit') {
+          this.properties[propIdx].status = 'Reserved';
+        }
+      }
+    }
+
+    this.saveAll();
+    this.syncSalesTargetWithDeals(newDeal.agentId);
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'REAL_ESTATE_DEAL_REGISTERED',
+      'Real Estate Sales',
+      `Registered deal ${dealCode} for ${newDeal.propertyTitle} by agent ${newDeal.agentName} ($${newDeal.salePriceUSD.toLocaleString()}, Commission: $${newDeal.agentCommissionUSD.toLocaleString()})`
+    );
+    return newDeal;
+  }
+
+  public updateRealEstateDeal(id: string, updates: Partial<RealEstateDeal>): RealEstateDeal | null {
+    const idx = this.deals.findIndex(d => d.id === id);
+    if (idx === -1) return null;
+    const oldDeal = this.deals[idx];
+    const updatedDeal: RealEstateDeal = {
+      ...oldDeal,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.deals[idx] = updatedDeal;
+
+    // Sync property status if stage changed
+    if (updates.stage && updatedDeal.propertyId) {
+      const propIdx = this.properties.findIndex(p => p.id === updatedDeal.propertyId);
+      if (propIdx >= 0) {
+        if (updates.stage === 'Handover / Closed') {
+          this.properties[propIdx].status = 'Sold';
+        } else if (updates.stage === 'Contract Signed' || updates.stage === 'Down Payment Cleared') {
+          this.properties[propIdx].status = 'Under Contract';
+        } else if (updates.stage === 'Booking Deposit') {
+          this.properties[propIdx].status = 'Reserved';
+        }
+      }
+    }
+
+    this.saveAll();
+    this.syncSalesTargetWithDeals(updatedDeal.agentId);
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'REAL_ESTATE_DEAL_UPDATED',
+      'Real Estate Sales',
+      `Updated deal ${updatedDeal.dealCode} (${updatedDeal.stage}) for client ${updatedDeal.clientName}`
+    );
+    return { ...this.deals[idx] };
+  }
+
+  public updateDealCommissionStatus(
+    dealId: string, 
+    status: CommissionPayoutStatus, 
+    approverId?: string, 
+    approverName?: string
+  ): RealEstateDeal | null {
+    const idx = this.deals.findIndex(d => d.id === dealId);
+    if (idx === -1) return null;
+    const deal = this.deals[idx];
+    deal.commissionPayoutStatus = status;
+    deal.updatedAt = new Date().toISOString();
+    if (status === 'Approved' || status === 'Paid Out') {
+      deal.payoutApprovedById = approverId || this.getCurrentUser().id;
+      deal.payoutApprovedByName = approverName || this.getCurrentUser().name;
+      if (status === 'Paid Out') {
+        deal.payoutDate = new Date().toISOString().split('T')[0];
+      }
+    }
+    this.saveAll();
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'COMMISSION_STATUS_CHANGED',
+      'Real Estate Sales',
+      `Changed commission status for ${deal.dealCode} to "${status}" (Agent: ${deal.agentName}, Amount: $${deal.agentCommissionUSD.toLocaleString()})`
+    );
+
+    // Also send in-app notification to the agent
+    if (deal.agentId) {
+      this.addNotification({
+        userId: deal.agentId,
+        title: `Commission ${status}: ${deal.dealCode}`,
+        message: `Your commission of $${deal.agentCommissionUSD.toLocaleString()} for ${deal.propertyTitle} is now "${status}".`,
+        type: status === 'Approved' || status === 'Paid Out' ? 'approved' : 'assignment',
+        linkTo: 'real-estate',
+        actionRequired: false,
+      });
+    }
+
+    return { ...this.deals[idx] };
+  }
+
+  public deleteRealEstateDeal(id: string): boolean {
+    const deal = this.deals.find(d => d.id === id);
+    if (!deal) return false;
+    this.deals = this.deals.filter(d => d.id !== id);
+    this.saveAll();
+    this.syncSalesTargetWithDeals(deal.agentId);
+
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'REAL_ESTATE_DEAL_DELETED',
+      'Real Estate Sales',
+      `Removed deal ${deal.dealCode} (${deal.propertyTitle})`
+    );
+    return true;
+  }
+
+  // ==========================================
+  // COMMISSION TIERS
+  // ==========================================
+  public getCommissionTiers(): CommissionTierConfig[] {
+    return Array.isArray(this.commissionTiers) ? [...this.commissionTiers] : [];
+  }
+
+  public saveCommissionTiers(tiers: CommissionTierConfig[]): void {
+    this.commissionTiers = [...tiers];
+    this.saveAll();
+    const cur = this.getCurrentUser();
+    this.logAction(
+      cur.id,
+      cur.name,
+      'COMMISSION_TIERS_CONFIGURED',
+      'Real Estate Sales',
+      `Configured ${tiers.length} progressive commission incentive tiers`
+    );
   }
 }
 
